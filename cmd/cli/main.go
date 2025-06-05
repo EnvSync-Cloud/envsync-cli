@@ -13,6 +13,13 @@ func main() {
 		Name:   "envsync-cli",
 		Usage:  "Sync environment variables between local and remote environments",
 		Action: actions.IndexAction(),
+		Commands: []*cli.Command{
+			{
+				Name:   "login",
+				Usage:  "Login to EnvSync Cloud",
+				Action: actions.LoginAction(),
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {

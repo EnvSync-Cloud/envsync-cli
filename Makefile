@@ -1,4 +1,4 @@
-MAIN_PACKAGE := ./cmd/cli
+MAIN_PACKAGE := ./cmd/cli/main.go
 BINARY_NAME := envsync
 
 # ==================================================================================== #
@@ -32,11 +32,20 @@ dev:
 ## watch: run the application with reloading on file changes
 .PHONY: watch
 watch:
-	@air \
-		--build.cmd "make build" --build.bin "bin/${BINARY_NAME}" --build.delay "100" \
-        --build.exclude_dir "" \
-        --build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico, pkl" \
-        --misc.clean_on_exit "true"
+	@if command -v air > /dev/null; then \
+		    air; \
+		    echo "Watching...";\
+		else \
+		    read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+		    if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+		        go install github.com/air-verse/air@latest; \
+		        air; \
+		        echo "Watching...";\
+		    else \
+		        echo "You chose not to install air. Exiting..."; \
+		        exit 1; \
+		    fi; \
+		fi
 
 ## update: updates the packages and tidy the modfile
 .PHONY: watch
