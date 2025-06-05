@@ -1,0 +1,3 @@
+# EnvSync CLI
+
+> Under development ⚠️
