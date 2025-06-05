@@ -19,6 +19,25 @@ func main() {
 				Usage:  "Login to EnvSync Cloud",
 				Action: actions.LoginAction(),
 			},
+			{
+				Name:   "gen-config",
+				Usage:  "Generate a new configuration file",
+				Action: actions.GenConfigAction(),
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "app-id",
+						Usage:    "App ID of your application",
+						Aliases:  []string{"a"},
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "env-type",
+						Usage:    "Type of your environment",
+						Aliases:  []string{"e"},
+						Required: true,
+					},
+				},
+			},
 		},
 	}
 

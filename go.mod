@@ -3,6 +3,7 @@ module github.com/EnvSync-Cloud/envsync-cli
 go 1.24.3
 
 require (
+	github.com/BurntSushi/toml v1.5.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/urfave/cli/v2 v2.27.6
 	resty.dev/v3 v3.0.0-beta.3
