@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -10,6 +9,7 @@ import (
 
 type AppConfig struct {
 	AccessToken string `json:"access_token"`
+	BackendURL  string `json:"backend_url"`
 }
 
 var cfg AppConfig
@@ -17,48 +17,60 @@ var once sync.Once
 
 const configDirPath = "/.config/envsync"
 
-func New() (AppConfig, error) {
-	var err error
-
+func New() AppConfig {
 	once.Do(func() {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			err = fmt.Errorf("failed to get user home directory: %w", err)
-			return
+			panic(err)
 		}
 
-		//Get absolute path of config directory
-		dirPath, err := filepath.Abs(home + configDirPath)
-		if err != nil {
-			err = fmt.Errorf("failed to get absolute path of config directory: %w", err)
-			return
+		filePath := filepath.Join(home, configDirPath, "config.json")
+
+		// Ensure directory exists
+		dirPath := filepath.Dir(filePath)
+		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+			panic(err)
 		}
 
-		// Check if directory exists
-		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-			err := os.Mkdir(dirPath, os.ModePerm)
+		// Create file if it doesn't exist
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			file, err := os.Create(filePath)
 			if err != nil {
-				err = fmt.Errorf("failed to create config directory: %w", err)
-				return
+				panic(err)
 			}
+			file.Close()
 		}
 
-		cfg, err = ReadConfigFile(dirPath + "/config.json")
+		cfg, err = ReadConfigFile()
 	})
 
-	return cfg, err
+	return cfg
 }
 
-func (c *AppConfig) WriteConfigFile(filePath string) error {
+func (c *AppConfig) WriteConfigFile() error {
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
 
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	filePath := filepath.Join(home, configDirPath, "config.json")
+
 	return os.WriteFile(filePath, data, 0644)
 }
 
-func ReadConfigFile(filePath string) (AppConfig, error) {
+func ReadConfigFile() (AppConfig, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	filePath := filepath.Join(home, configDirPath, "config.json")
+
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return AppConfig{}, err
