@@ -25,6 +25,7 @@ tmp/
 # Miscelleneous file
 .env
 *.log
+.DS_Store
 
 # Project build
 bin/

@@ -14,6 +14,7 @@ type AppConfig struct {
 
 var cfg AppConfig
 var once sync.Once
+var backendURL string
 
 const configDirPath = "/.config/envsync"
 
@@ -42,6 +43,11 @@ func New() AppConfig {
 		}
 
 		cfg, err = ReadConfigFile()
+		if err != nil {
+			panic(err)
+		}
+
+		cfg.BackendURL = backendURL
 	})
 
 	return cfg

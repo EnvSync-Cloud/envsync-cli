@@ -5,33 +5,30 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/models"
 	"github.com/urfave/cli/v2"
 )
-
-type ProjectEnvConfig struct {
-	AppID   string `toml:"app_id"`
-	EnvType string `toml:"env_type"`
-}
 
 func GenConfigAction() cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		appID := ctx.String("app-id")
 		envType := ctx.String("env-type")
 
-		config := ProjectEnvConfig{
+		config := models.ProjectEnvConfig{
 			AppID:   appID,
 			EnvType: envType,
 		}
 
 		// Check if the project config file exists
-		if _, err := os.Stat("envsyncrc.toml"); err != nil {
+		if _, err := os.Stat(constants.DefaultProjectConfig); err != nil {
 			if os.IsNotExist(err) {
-				os.Create("envsyncrc.toml")
+				os.Create(constants.DefaultProjectConfig)
 			}
 		}
 
 		// Write the config to the file
-		file, err := os.Create("envsyncrc.toml")
+		file, err := os.Create(constants.DefaultProjectConfig)
 		if err != nil {
 			return err
 		}

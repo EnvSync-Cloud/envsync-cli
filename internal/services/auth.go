@@ -13,22 +13,22 @@ type AuthService interface {
 	LoginToken(deviceCode, clientID, authDomain string) (string, error)
 }
 
-type authService struct {
+type auth struct {
 	client *resty.Client
 	cfg    config.AppConfig
 }
 
 func NewAuthService() AuthService {
 	cfg := config.New()
-	client := resty.New().SetBaseURL("http://localhost:8600/api")
+	client := resty.New().SetBaseURL(cfg.BackendURL)
 
-	return &authService{
+	return &auth{
 		client: client,
 		cfg:    cfg,
 	}
 }
 
-func (s *authService) LoginDeviceCode() (responses.DeviceCodeResponse, error) {
+func (s *auth) LoginDeviceCode() (responses.DeviceCodeResponse, error) {
 	var resBody responses.DeviceCodeResponse
 
 	res, err := s.client.
@@ -47,7 +47,7 @@ func (s *authService) LoginDeviceCode() (responses.DeviceCodeResponse, error) {
 	return resBody, nil
 }
 
-func (s *authService) LoginToken(deviceCode, clientID, authDomain string) (string, error) {
+func (s *auth) LoginToken(deviceCode, clientID, authDomain string) (string, error) {
 	var resBody responses.LoginTokenResponse
 
 	res, err := s.client.

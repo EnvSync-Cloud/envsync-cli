@@ -38,6 +38,16 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:   "push",
+				Usage:  "Push environment variables to remote environment",
+				Action: actions.PushAction(),
+			},
+			{
+				Name:   "pull",
+				Usage:  "Pull environment variables from remote environment",
+				Action: actions.PullAction(),
+			},
 		},
 	}
 
