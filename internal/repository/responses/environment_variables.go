@@ -10,15 +10,3 @@ type EnvironmentVariables struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
-
-type EnvVariableList []struct {
-	EnvironmentVariables
-}
-
-func (e *EnvVariableList) ToMap() map[string]string {
-	result := make(map[string]string)
-	for _, envVar := range *e {
-		result[envVar.Key] = envVar.Value
-	}
-	return result
-}

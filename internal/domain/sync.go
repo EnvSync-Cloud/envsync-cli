@@ -2,24 +2,20 @@ package domain
 
 import "time"
 
-// Environment represents an environment configuration for an application
-type Environment struct {
-	ID          string
-	Name        string
-	Description string
-	Variables   map[string]EnvironmentVariable
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+// AppEnvironment represents an environment configuration for an application
+type AppEnvironment struct {
+	ID        string
+	OrgID     string
+	Name      string
+	Variables []EnvironmentVariable
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // EnvironmentVariable represents a single environment variable
 type EnvironmentVariable struct {
-	Key         string
-	Value       string
-	Description string
-	IsSecret    bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Key   string
+	Value string
 }
 
 // EnvironmentSync represents the sync state between local and remote environments
@@ -34,9 +30,8 @@ type EnvironmentSync struct {
 
 // SyncConfig represents the configuration needed for syncing
 type SyncConfig struct {
-	AppID       string
-	EnvType     string
-	EnvFilePath string
+	AppID     string `toml:"app_id"`
+	EnvTypeID string `toml:"env_type_id"`
 }
 
 // NewEnvironmentSync creates a new EnvironmentSync instance
@@ -64,18 +59,15 @@ func (es *EnvironmentSync) CalculateDiff() {
 			// Variable exists in both - check if it needs updating
 			if remoteVar.Value != localValue {
 				es.ToUpdate = append(es.ToUpdate, EnvironmentVariable{
-					Key:       key,
-					Value:     localValue,
-					IsSecret:  remoteVar.IsSecret,
-					UpdatedAt: time.Now(),
+					Key:   key,
+					Value: localValue,
 				})
 			}
 		} else {
 			// Variable only exists locally - needs to be added
 			es.ToAdd = append(es.ToAdd, EnvironmentVariable{
-				Key:       key,
-				Value:     localValue,
-				CreatedAt: time.Now(),
+				Key:   key,
+				Value: localValue,
 			})
 		}
 	}

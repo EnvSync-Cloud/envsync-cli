@@ -10,7 +10,7 @@ import (
 )
 
 type SyncRepository interface {
-	PullEnv() (responses.EnvVariableList, error)
+	GetAllEnv() ([]responses.EnvironmentVariables, error)
 }
 
 type syncRepo struct {
@@ -19,9 +19,10 @@ type syncRepo struct {
 	envTypeID string
 }
 
-func NewSyncService(appID, envTypeID string) SyncRepository {
+func NewSyncRepository(appID, envTypeID string) SyncRepository {
 	cfg := config.New()
 	client := resty.New().
+		SetDisableWarn(true).
 		SetBaseURL(cfg.BackendURL).
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(cfg.AccessToken)
@@ -33,8 +34,8 @@ func NewSyncService(appID, envTypeID string) SyncRepository {
 	}
 }
 
-func (s *syncRepo) PullEnv() (responses.EnvVariableList, error) {
-	var env responses.EnvVariableList
+func (s *syncRepo) GetAllEnv() ([]responses.EnvironmentVariables, error) {
+	var env []responses.EnvironmentVariables
 
 	res, err := s.client.
 		R().
