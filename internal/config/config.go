@@ -1,86 +1,89 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
-	"sync"
+
+	"github.com/spf13/viper"
 )
 
 type AppConfig struct {
-	AccessToken string `json:"access_token"`
-	BackendURL  string `json:"backend_url"`
+	IdToken string `mapstructure:"idToken"`
+	APIUrl  string `mapstructure:"apiUrl"`
 }
 
-var cfg AppConfig
-var once sync.Once
+func New() (AppConfig, error) {
+	var cfg AppConfig
 
-const configDirPath = "/.config/envsync"
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return cfg, err
+	}
+	appConfigDir := filepath.Join(configDir, "envsync-cli")
+	if err := os.MkdirAll(appConfigDir, 0700); err != nil {
+		return cfg, err
+	}
 
-func New() AppConfig {
-	once.Do(func() {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			panic(err)
+	v := viper.New()
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(appConfigDir)
+
+	v.SetDefault("idToken", "")
+	v.SetDefault("apiUrl", "")
+
+	// Read or initialize config
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			_ = v.WriteConfigAs(filepath.Join(appConfigDir, "config.yaml"))
+		} else {
+			return cfg, err
 		}
+	}
 
-		filePath := filepath.Join(home, configDirPath, "config.json")
-
-		// Ensure directory exists
-		dirPath := filepath.Dir(filePath)
-		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-			panic(err)
-		}
-
-		// Create file if it doesn't exist
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			file, err := os.Create(filePath)
-			if err != nil {
-				panic(err)
-			}
-			file.Close()
-		}
-
-		cfg, err = ReadConfigFile()
-	})
-
-	return cfg
+	if err := v.Unmarshal(&cfg); err != nil {
+		return cfg, err
+	}
+	return cfg, nil
 }
 
-func (c *AppConfig) WriteConfigFile() error {
-	data, err := json.MarshalIndent(c, "", "  ")
+func (c *AppConfig) AddConfig() error {
+	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return err
 	}
+	appConfigDir := filepath.Join(configDir, "envsync-cli")
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
+	v := viper.New()
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(appConfigDir)
+
+	if err := v.ReadInConfig(); err != nil {
+		return err
 	}
 
-	filePath := filepath.Join(home, configDirPath, "config.json")
+	v.Set("idToken", c.IdToken)
+	v.Set("apiUrl", c.APIUrl)
 
-	return os.WriteFile(filePath, data, 0644)
+	return v.WriteConfigAs(filepath.Join(appConfigDir, "config.yaml"))
 }
 
-func ReadConfigFile() (AppConfig, error) {
-	home, err := os.UserHomeDir()
+func (c *AppConfig) ReadConfig() error {
+	configDir, err := os.UserConfigDir()
 	if err != nil {
-		panic(err)
+		return err
+	}
+	appConfigDir := filepath.Join(configDir, "envsync-cli")
+
+	v := viper.New()
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(appConfigDir)
+
+	if err := v.ReadInConfig(); err != nil {
+		return err
 	}
 
-	filePath := filepath.Join(home, configDirPath, "config.json")
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	var config AppConfig
-	err = json.Unmarshal(data, &config)
-	if err != nil {
-		return AppConfig{}, err
-	}
-
-	return config, nil
+	return v.Unmarshal(c)
 }

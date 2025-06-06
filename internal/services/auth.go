@@ -19,7 +19,10 @@ type authService struct {
 }
 
 func NewAuthService() AuthService {
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
 	client := resty.New().SetBaseURL("http://localhost:8600/api")
 
 	return &authService{
@@ -69,5 +72,5 @@ func (s *authService) LoginToken(deviceCode, clientID, authDomain string) (strin
 		return "", fmt.Errorf("unexpected status code while fetching login token: %d", res.StatusCode())
 	}
 
-	return resBody.AccessToken, nil
+	return resBody.IdToken, nil
 }

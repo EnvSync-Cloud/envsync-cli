@@ -32,9 +32,12 @@ func LoginAction() cli.ActionFunc {
 			if err == nil {
 				fmt.Printf("✅ Login successful")
 
-				cfg := config.New()
-				cfg.AccessToken = token
-				if err := cfg.WriteConfigFile(); err != nil {
+				cfg, err := config.New()
+				if err != nil {
+					return err
+				}
+				cfg.IdToken = token
+				if err := cfg.AddConfig(); err != nil {
 					return err
 				}
 
