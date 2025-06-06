@@ -1,4 +1,4 @@
-package services
+package repository
 
 import (
 	"fmt"
@@ -9,35 +9,39 @@ import (
 	"resty.dev/v3"
 )
 
-type SyncService interface {
-	PullEnv(appId, envType string) (map[string]string, error)
+type SyncRepository interface {
+	PullEnv() (responses.EnvVariableList, error)
 }
 
-type sync struct {
-	client *resty.Client
+type syncRepo struct {
+	client    *resty.Client
+	appID     string
+	envTypeID string
 }
 
-func NewSyncService() SyncService {
+func NewSyncService(appID, envTypeID string) SyncRepository {
 	cfg := config.New()
 	client := resty.New().
 		SetBaseURL(cfg.BackendURL).
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(cfg.AccessToken)
 
-	return &sync{
-		client: client,
+	return &syncRepo{
+		client:    client,
+		appID:     appID,
+		envTypeID: envTypeID,
 	}
 }
 
-func (s *sync) PullEnv(appId, envType string) (map[string]string, error) {
+func (s *syncRepo) PullEnv() (responses.EnvVariableList, error) {
 	var env responses.EnvVariableList
 
 	res, err := s.client.
 		R().
 		SetResult(&env).
 		SetBody(requests.EnvVariableRequest{
-			AppID:     appId,
-			EnvTypeID: envType,
+			AppID:     s.appID,
+			EnvTypeID: s.envTypeID,
 		}).
 		Post("/env")
 
@@ -49,17 +53,5 @@ func (s *sync) PullEnv(appId, envType string) (map[string]string, error) {
 		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode())
 	}
 
-	return env.ToMap(), nil
-}
-
-func (s *sync) PushEnv() error {
-	// Get All the env from cloud
-
-	// Sort the existing env in remote and local
-
-	// The one which are not in remote, hit batch create endpoint
-
-	// The existing env which have changed values, hit batch update endpoint
-
-	return nil
+	return env, nil
 }

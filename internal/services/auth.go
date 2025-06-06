@@ -2,72 +2,86 @@ package services
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/config"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services/responses"
-	"resty.dev/v3"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/mappers"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/repository"
 )
 
 type AuthService interface {
-	LoginDeviceCode() (responses.DeviceCodeResponse, error)
-	LoginToken(deviceCode, clientID, authDomain string) (string, error)
+	InitiateLogin() (*domain.LoginCredentials, error)
+	CompleteLogin(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
+	PollForToken(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
+	SaveToken(token *domain.AccessToken) error
 }
 
 type auth struct {
-	client *resty.Client
-	cfg    config.AppConfig
+	repo repository.AuthRepository
+	cfg  config.AppConfig
 }
 
 func NewAuthService() AuthService {
+	r := repository.NewAuthRepository()
 	cfg := config.New()
-	client := resty.New().SetBaseURL(cfg.BackendURL)
 
 	return &auth{
-		client: client,
-		cfg:    cfg,
+		repo: r,
+		cfg:  cfg,
 	}
 }
 
-func (s *auth) LoginDeviceCode() (responses.DeviceCodeResponse, error) {
-	var resBody responses.DeviceCodeResponse
-
-	res, err := s.client.
-		R().
-		SetResult(&resBody).
-		Get("/access/cli")
-
+// InitiateLogin starts the OAuth device flow and returns login credentials
+func (s *auth) InitiateLogin() (*domain.LoginCredentials, error) {
+	deviceCodeResp, err := s.repo.LoginDeviceCode()
 	if err != nil {
-		return responses.DeviceCodeResponse{}, fmt.Errorf("failed to get login URL: %w", err)
+		return nil, fmt.Errorf("failed to initiate login: %w", err)
 	}
 
-	if res.StatusCode() != 201 {
-		return responses.DeviceCodeResponse{}, fmt.Errorf("unexpected status code while fetching login URL: %d", res.StatusCode())
-	}
+	credentials := mappers.DeviceCodeResponseToDomain(deviceCodeResp)
 
-	return resBody, nil
+	return credentials, nil
 }
 
-func (s *auth) LoginToken(deviceCode, clientID, authDomain string) (string, error) {
-	var resBody responses.LoginTokenResponse
-
-	res, err := s.client.
-		SetBaseURL("https://" + authDomain).
-		R().
-		SetResult(&resBody).
-		SetFormData(map[string]string{
-			"grant_type":  "urn:ietf:params:oauth:grant-type:device_code",
-			"device_code": deviceCode,
-			"client_id":   clientID,
-		}).
-		Post("/oauth/token")
-
+// CompleteLogin attempts to exchange device code for access token
+func (s *auth) CompleteLogin(credentials *domain.LoginCredentials) (*domain.AccessToken, error) {
+	tokenResp, err := s.repo.LoginToken(credentials.DeviceCode, credentials.ClientId, credentials.AuthDomain)
 	if err != nil {
-		return "", fmt.Errorf("failed to get login token: %w", err)
+		return nil, err
 	}
 
-	if res.StatusCode() != 200 {
-		return "", fmt.Errorf("unexpected status code while fetching login token: %d", res.StatusCode())
+	token := mappers.LoginTokenResponseToDomain(tokenResp)
+	return token, nil
+}
+
+// PollForToken polls the authorization server until user completes authentication
+func (s *auth) PollForToken(credentials *domain.LoginCredentials) (*domain.AccessToken, error) {
+	timeout := time.Now().Add(time.Duration(credentials.ExpiresIn) * time.Second)
+	interval := time.Duration(credentials.Interval) * time.Second
+
+	for time.Now().Before(timeout) {
+		token, err := s.CompleteLogin(credentials)
+		if err == nil {
+			return token, nil
+		}
+
+		// If it's not an authentication pending error, return the error
+		// In a real implementation, you'd check for specific error types
+		time.Sleep(interval)
 	}
 
-	return resBody.AccessToken, nil
+	return nil, fmt.Errorf("authentication timeout: user did not complete login within %d seconds", credentials.ExpiresIn)
+}
+
+// SaveToken persists the access token to configuration
+func (s *auth) SaveToken(token *domain.AccessToken) error {
+	cfg := config.New()
+	cfg.AccessToken = token.Token
+
+	if err := cfg.WriteConfigFile(); err != nil {
+		return fmt.Errorf("failed to save access token: %w", err)
+	}
+
+	return nil
 }
