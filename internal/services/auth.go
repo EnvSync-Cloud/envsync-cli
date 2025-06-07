@@ -15,6 +15,7 @@ type AuthService interface {
 	CompleteLogin(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
 	PollForToken(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
 	SaveToken(token *domain.AccessToken) error
+	Whoami() (*domain.UserInfo, error)
 }
 
 type auth struct {
@@ -84,4 +85,15 @@ func (s *auth) SaveToken(token *domain.AccessToken) error {
 	}
 
 	return nil
+}
+
+// Whoami retrieves the current user's information
+func (s *auth) Whoami() (*domain.UserInfo, error) {
+	userInfoResp, err := s.repo.Whoami()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve user info: %w", err)
+	}
+
+	userInfo := mappers.UserInfoResponseToDomain(userInfoResp)
+	return userInfo, nil
 }

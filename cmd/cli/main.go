@@ -20,6 +20,18 @@ func main() {
 				Action: actions.LoginAction(),
 			},
 			{
+				Name:   "whoami",
+				Usage:  "Display current user information",
+				Action: actions.Whoami(),
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "json",
+						Usage:   "Output user info in JSON format",
+						Aliases: []string{"j"},
+					},
+				},
+			},
+			{
 				Name:   "gen-config",
 				Usage:  "Generate a new configuration file",
 				Action: actions.GenConfigAction(),

@@ -62,3 +62,10 @@ type AuthResult struct {
 	AccessToken *AccessToken
 	Error       error
 }
+
+type UserInfo struct {
+	UserId string
+	Email  string
+	Org    string
+	Role   string
+}
