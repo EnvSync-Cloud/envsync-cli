@@ -10,9 +10,11 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:   "envsync-cli",
-		Usage:  "Sync environment variables between local and remote environments",
-		Action: actions.IndexAction(),
+		Name:                 "envsync-cli",
+		Usage:                "Sync environment variables between local and remote environments",
+		Action:               actions.IndexAction(),
+		Suggest:              true,
+		EnableBashCompletion: true,
 		Commands: []*cli.Command{
 			{
 				Name:   "login",
@@ -60,6 +62,27 @@ func main() {
 					},
 				},
 				Action: actions.RunAction(),
+			},
+			{
+				Name:  "app",
+				Usage: "Interact with your applications.",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "create",
+						Usage:  "Create a new application.",
+						Action: actions.CreateApplication(),
+					},
+					{
+						Name:   "delete",
+						Usage:  "Delete an application.",
+						Action: actions.DeleteApplication(),
+					},
+					{
+						Name:   "list",
+						Usage:  "List all applications.",
+						Action: actions.ListApplications(),
+					},
+				},
 			},
 		},
 	}
