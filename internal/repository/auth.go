@@ -11,6 +11,7 @@ import (
 type AuthRepository interface {
 	LoginDeviceCode() (responses.DeviceCodeResponse, error)
 	LoginToken(deviceCode, clientID, authDomain string) (responses.LoginTokenResponse, error)
+	Whoami() (responses.UserInfoResponse, error)
 }
 
 type authRepo struct {
@@ -20,7 +21,9 @@ type authRepo struct {
 // NewAuthRepository creates a new instance of AuthRepository
 func NewAuthRepository() AuthRepository {
 	cfg := config.New()
-	c := resty.New().SetBaseURL(cfg.BackendURL)
+	c := resty.New().
+		SetBaseURL(cfg.BackendURL).
+		SetDisableWarn(true)
 
 	return &authRepo{
 		client: c,
@@ -68,6 +71,26 @@ func (s *authRepo) LoginToken(deviceCode, clientID, authDomain string) (response
 
 	if res.StatusCode() != 200 {
 		return responses.LoginTokenResponse{}, fmt.Errorf("unexpected status code while fetching login token: %d", res.StatusCode())
+	}
+
+	return resBody, nil
+}
+
+func (s *authRepo) Whoami() (responses.UserInfoResponse, error) {
+	var resBody responses.UserInfoResponse
+
+	res, err := s.client.
+		R().
+		SetAuthToken(config.New().AccessToken).
+		SetResult(&resBody).
+		Get("/auth/me")
+
+	if err != nil {
+		return responses.UserInfoResponse{}, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	if res.StatusCode() != 200 {
+		return responses.UserInfoResponse{}, fmt.Errorf("unexpected status code while fetching user info: %d", res.StatusCode())
 	}
 
 	return resBody, nil
