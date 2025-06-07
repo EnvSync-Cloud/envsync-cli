@@ -19,6 +19,7 @@ type SyncService interface {
 	GetAllEnv(appID, envTypeID string) ([]*domain.EnvironmentVariable, error)
 	CalculateEnvDiff(local map[string]string, remote map[string]string) *domain.EnvironmentSync
 	WriteLocalEnv(env map[string]string) error
+	PushEnv(env *domain.EnvironmentSync) error
 }
 
 type sync struct {
@@ -89,17 +90,10 @@ func (s *sync) WriteLocalEnv(env map[string]string) error {
 	return helper.WriteEnv(env)
 }
 
-// func (s *sync) PushEnv() error {
-// 	// Get All the env from cloud
+func (s *sync) PushEnv(env *domain.EnvironmentSync) error {
 
-// 	// Sort the existing env in remote and local
-
-// 	// The one which are not in remote, hit batch create endpoint
-
-// 	// The existing env which have changed values, hit batch update endpoint
-
-// 	return nil
-// }
+	return nil
+}
 
 func readTOMLConfig(c *domain.SyncConfig) error {
 	if _, err := toml.DecodeFile(constants.DefaultProjectConfig, &c); err != nil {

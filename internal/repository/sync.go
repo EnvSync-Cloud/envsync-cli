@@ -11,6 +11,9 @@ import (
 
 type SyncRepository interface {
 	GetAllEnv() ([]responses.EnvironmentVariables, error)
+	BatchCreateEnv(env requests.BatchSyncEnvRequest) error
+	BatchUpdateEnv(env requests.BatchSyncEnvRequest) error
+	BatchDeleteEnv(env requests.BatchSyncEnvRequest) error
 }
 
 type syncRepo struct {
@@ -55,4 +58,55 @@ func (s *syncRepo) GetAllEnv() ([]responses.EnvironmentVariables, error) {
 	}
 
 	return env, nil
+}
+
+func (s *syncRepo) BatchCreateEnv(env requests.BatchSyncEnvRequest) error {
+	res, err := s.client.
+		R().
+		SetBody(env).
+		Put("/env/batch")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() != 200 {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
+	}
+
+	return nil
+}
+
+func (s *syncRepo) BatchUpdateEnv(env requests.BatchSyncEnvRequest) error {
+	res, err := s.client.
+		R().
+		SetBody(env).
+		Patch("/env/batch")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() != 200 {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
+	}
+
+	return nil
+}
+
+func (s *syncRepo) BatchDeleteEnv(env requests.BatchSyncEnvRequest) error {
+	res, err := s.client.
+		R().
+		SetBody(env).
+		Delete("/env/batch")
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() != 200 {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
+	}
+
+	return nil
 }
