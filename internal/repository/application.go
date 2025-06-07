@@ -10,9 +10,10 @@ import (
 )
 
 type ApplicationRepository interface {
-	Create(app requests.ApplicationRequest) error
+	Create(app requests.ApplicationRequest) (responses.AppResponse, error)
 	GetAll() ([]responses.AppResponse, error)
 	Delete(id string) error
+	GetByID(id string) (responses.AppResponse, error)
 }
 
 type appRepo struct {
@@ -23,6 +24,7 @@ func NewApplicationRepository() ApplicationRepository {
 	cfg := config.New()
 	c := resty.New().
 		SetBaseURL(cfg.BackendURL).
+		SetDisableWarn(true).
 		SetAuthToken(cfg.AccessToken)
 
 	return &appRepo{
@@ -30,7 +32,7 @@ func NewApplicationRepository() ApplicationRepository {
 	}
 }
 
-func (a *appRepo) Create(app requests.ApplicationRequest) error {
+func (a *appRepo) Create(app requests.ApplicationRequest) (responses.AppResponse, error) {
 	var response responses.AppResponse
 
 	resp, err := a.client.R().
@@ -39,14 +41,14 @@ func (a *appRepo) Create(app requests.ApplicationRequest) error {
 		Post("/app")
 
 	if err != nil {
-		return err
+		return responses.AppResponse{}, err
 	}
 
 	if resp.StatusCode() != 201 {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+		return responses.AppResponse{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
 	}
 
-	return nil
+	return response, nil
 }
 
 func (a *appRepo) GetAll() ([]responses.AppResponse, error) {
@@ -81,4 +83,23 @@ func (a *appRepo) Delete(id string) error {
 	}
 
 	return nil
+}
+
+func (a *appRepo) GetByID(id string) (responses.AppResponse, error) {
+	var app responses.AppResponse
+
+	resp, err := a.client.R().
+		SetPathParam("id", id).
+		SetResult(&app).
+		Get("/app/{id}")
+
+	if err != nil {
+		return responses.AppResponse{}, err
+	}
+
+	if resp.StatusCode() != 200 {
+		return responses.AppResponse{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+	}
+
+	return app, nil
 }

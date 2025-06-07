@@ -7,7 +7,8 @@ import (
 )
 
 type ApplicationService interface {
-	CreateApp(app domain.Application) error
+	CreateApp(app domain.Application) (domain.Application, error)
+	GetAppByID(id string) (domain.Application, error)
 	GetAllApps() ([]domain.Application, error)
 	DeleteApp(app domain.Application) error
 }
@@ -24,14 +25,17 @@ func NewAppService() ApplicationService {
 	}
 }
 
-func (a *app) CreateApp(app domain.Application) error {
+func (a *app) CreateApp(app domain.Application) (domain.Application, error) {
 	req := mappers.DomainToAppRequest(app)
 
-	if err := a.repo.Create(req); err != nil {
-		return err
+	var appRes domain.Application
+	if res, err := a.repo.Create(req); err != nil {
+		return domain.Application{}, err
+	} else {
+		appRes = mappers.AppResponseToDomain(res)
 	}
 
-	return nil
+	return appRes, nil
 }
 
 func (a *app) GetAllApps() ([]domain.Application, error) {
@@ -54,4 +58,14 @@ func (a *app) DeleteApp(app domain.Application) error {
 	}
 
 	return nil
+}
+
+func (a *app) GetAppByID(id string) (domain.Application, error) {
+	res, err := a.repo.GetByID(id)
+	if err != nil {
+		return domain.Application{}, err
+	}
+
+	app := mappers.AppResponseToDomain(res)
+	return app, nil
 }
