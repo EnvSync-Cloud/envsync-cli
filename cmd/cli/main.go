@@ -17,14 +17,34 @@ func main() {
 		EnableBashCompletion: true,
 		Commands: []*cli.Command{
 			{
-				Name:   "login",
-				Usage:  "Login to EnvSync Cloud",
-				Action: actions.LoginAction(),
+				Name:     "login",
+				Usage:    "Login to EnvSync Cloud",
+				Action:   actions.LoginAction(),
+				Category: "Auth",
 			},
 			{
-				Name:   "gen-config",
+				Name:   "whoami",
+				Usage:  "Display current user information",
+				Action: actions.Whoami(),
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "json",
+						Usage:   "Output user info in JSON format",
+						Aliases: []string{"j"},
+					},
+				},
+				Category: "Auth",
+			},
+			{
+				Name:     "logout",
+				Usage:    "Logout from EnvSync Cloud",
+				Action:   actions.Logout(),
+				Category: "Auth",
+			},
+			{
+				Name:   "init",
 				Usage:  "Generate a new configuration file",
-				Action: actions.GenConfigAction(),
+				Action: actions.InitAction(),
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "app-id",
@@ -39,16 +59,19 @@ func main() {
 						Required: true,
 					},
 				},
+				Category: "Config",
 			},
 			{
-				Name:   "push",
-				Usage:  "Push environment variables to remote environment",
-				Action: actions.PushAction(),
+				Name:     "push",
+				Usage:    "Push environment variables to remote environment",
+				Action:   actions.PushAction(),
+				Category: "Sync",
 			},
 			{
-				Name:   "pull",
-				Usage:  "Pull environment variables from remote environment",
-				Action: actions.PullAction(),
+				Name:     "pull",
+				Usage:    "Pull environment variables from remote environment",
+				Action:   actions.PullAction(),
+				Category: "Sync",
 			},
 			{
 				Name:  "run",

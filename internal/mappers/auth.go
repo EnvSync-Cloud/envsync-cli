@@ -23,11 +23,21 @@ func DeviceCodeResponseToDomain(resp responses.DeviceCodeResponse) *domain.Login
 // LoginTokenResponseToDomain converts repository response to domain model
 func LoginTokenResponseToDomain(resp responses.LoginTokenResponse) *domain.AccessToken {
 	expiresAt := time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
-	
+
 	return &domain.AccessToken{
 		Token:        resp.AccessToken,
 		RefreshToken: resp.RefreshToken,
 		ExpiresAt:    expiresAt,
 		TokenType:    resp.TokenType,
+	}
+}
+
+// UserInfoResponseToDomain converts user info response to domain model
+func UserInfoResponseToDomain(resp responses.UserInfoResponse) *domain.UserInfo {
+	return &domain.UserInfo{
+		UserId: resp.User.Id,
+		Email:  resp.User.Email,
+		Org:    resp.Org.Name,
+		Role:   resp.Role.Name,
 	}
 }

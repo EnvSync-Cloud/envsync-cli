@@ -15,6 +15,8 @@ type AuthService interface {
 	CompleteLogin(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
 	PollForToken(credentials *domain.LoginCredentials) (*domain.AccessToken, error)
 	SaveToken(token *domain.AccessToken) error
+	Whoami() (*domain.UserInfo, error)
+	Logout() error
 }
 
 type auth struct {
@@ -81,6 +83,29 @@ func (s *auth) SaveToken(token *domain.AccessToken) error {
 
 	if err := cfg.WriteConfigFile(); err != nil {
 		return fmt.Errorf("failed to save access token: %w", err)
+	}
+
+	return nil
+}
+
+// Whoami retrieves the current user's information
+func (s *auth) Whoami() (*domain.UserInfo, error) {
+	userInfoResp, err := s.repo.Whoami()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve user info: %w", err)
+	}
+
+	userInfo := mappers.UserInfoResponseToDomain(userInfoResp)
+	return userInfo, nil
+}
+
+// Logout clears the access token from configuration
+func (s *auth) Logout() error {
+	cfg := config.New()
+	cfg.AccessToken = ""
+
+	if err := cfg.WriteConfigFile(); err != nil {
+		return fmt.Errorf("failed to clear access token: %w", err)
 	}
 
 	return nil
