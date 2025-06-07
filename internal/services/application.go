@@ -7,7 +7,7 @@ import (
 )
 
 type ApplicationService interface {
-	CreateApp(app domain.Application) (domain.Application, error)
+	CreateApp(app *domain.Application) (domain.Application, error)
 	GetAppByID(id string) (domain.Application, error)
 	GetAllApps() ([]domain.Application, error)
 	DeleteApp(app domain.Application) error
@@ -25,7 +25,7 @@ func NewAppService() ApplicationService {
 	}
 }
 
-func (a *app) CreateApp(app domain.Application) (domain.Application, error) {
+func (a *app) CreateApp(app *domain.Application) (domain.Application, error) {
 	req := mappers.DomainToAppRequest(app)
 
 	var appRes domain.Application

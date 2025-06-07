@@ -18,7 +18,7 @@ func AppResponseToDomain(appResp responses.AppResponse) domain.Application {
 	}
 }
 
-func DomainToAppRequest(app domain.Application) requests.ApplicationRequest {
+func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 	return requests.ApplicationRequest{
 		Name:        app.Name,
 		Description: app.Description,
