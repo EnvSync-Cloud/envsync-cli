@@ -31,7 +31,7 @@ func main() {
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "env-type",
+						Name:     "env-type-id",
 						Usage:    "Type of your environment",
 						Aliases:  []string{"e"},
 						Required: true,
