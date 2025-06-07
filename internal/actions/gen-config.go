@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func GenConfigAction() cli.ActionFunc {
+func InitAction() cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		appID := ctx.String("app-id")
 		envType := ctx.String("env-type-id")

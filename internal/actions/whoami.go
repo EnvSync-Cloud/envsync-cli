@@ -29,7 +29,6 @@ func Whoami() cli.ActionFunc {
 		}
 
 		// Print user info
-		c.App.Writer.Write([]byte("EnvSync User Info:\n"))
 		c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 		c.App.Writer.Write([]byte("User ID: " + userInfo.UserId + "\n"))
 		c.App.Writer.Write([]byte("Email: " + userInfo.Email + "\n"))
