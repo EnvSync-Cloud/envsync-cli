@@ -13,7 +13,7 @@ type SyncRepository interface {
 	GetAllEnv() ([]responses.EnvironmentVariables, error)
 	BatchCreateEnv(env requests.BatchSyncEnvRequest) error
 	BatchUpdateEnv(env requests.BatchSyncEnvRequest) error
-	BatchDeleteEnv(env requests.BatchSyncEnvRequest) error
+	BatchDeleteEnv(env requests.BatchDeleteRequest) error
 }
 
 type syncRepo struct {
@@ -94,7 +94,7 @@ func (s *syncRepo) BatchUpdateEnv(env requests.BatchSyncEnvRequest) error {
 	return nil
 }
 
-func (s *syncRepo) BatchDeleteEnv(env requests.BatchSyncEnvRequest) error {
+func (s *syncRepo) BatchDeleteEnv(env requests.BatchDeleteRequest) error {
 	res, err := s.client.
 		R().
 		SetBody(env).

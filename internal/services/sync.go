@@ -23,7 +23,8 @@ type SyncService interface {
 }
 
 type sync struct {
-	repo repository.SyncRepository
+	repo       repository.SyncRepository
+	projectCfg domain.SyncConfig
 }
 
 func NewSyncService() SyncService {
@@ -33,7 +34,8 @@ func NewSyncService() SyncService {
 	repo := repository.NewSyncRepository(projCfg.AppID, projCfg.EnvTypeID)
 
 	return &sync{
-		repo: repo,
+		repo:       repo,
+		projectCfg: projCfg,
 	}
 }
 
@@ -91,6 +93,30 @@ func (s *sync) WriteLocalEnv(env map[string]string) error {
 }
 
 func (s *sync) PushEnv(env *domain.EnvironmentSync) error {
+	toCreate := env.ToAdd
+	toUpdate := env.ToUpdate
+	toDelete := env.ToDelete
+
+	if len(toCreate) != 0 {
+		batchCreateReq := mappers.EnvironmentVariableToBatchRequest(toCreate, s.projectCfg.AppID, s.projectCfg.EnvTypeID)
+		if err := s.repo.BatchCreateEnv(batchCreateReq); err != nil {
+			return err
+		}
+	}
+
+	if len(toUpdate) != 0 {
+		batchUpdateReq := mappers.EnvironmentVariableToBatchRequest(toUpdate, s.projectCfg.AppID, s.projectCfg.EnvTypeID)
+		if err := s.repo.BatchUpdateEnv(batchUpdateReq); err != nil {
+			return err
+		}
+	}
+
+	if len(toDelete) != 0 {
+		batchDeleteReq := mappers.KeysToBatchDeleteRequest(toDelete, s.projectCfg.AppID, s.projectCfg.EnvTypeID)
+		if err := s.repo.BatchDeleteEnv(batchDeleteReq); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
