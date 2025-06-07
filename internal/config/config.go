@@ -82,6 +82,10 @@ func ReadConfigFile() (AppConfig, error) {
 		return AppConfig{}, err
 	}
 
+	if len(data) == 0 {
+		return AppConfig{}, nil
+	}
+
 	var config AppConfig
 	err = json.Unmarshal(data, &config)
 	if err != nil {

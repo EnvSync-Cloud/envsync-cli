@@ -13,7 +13,7 @@ import (
 func GenConfigAction() cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		appID := ctx.String("app-id")
-		envType := ctx.String("env-type")
+		envType := ctx.String("env-type-id")
 
 		config := models.ProjectEnvConfig{
 			AppID:   appID,

@@ -31,7 +31,7 @@ func main() {
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "env-type",
+						Name:     "env-type-id",
 						Usage:    "Type of your environment",
 						Aliases:  []string{"e"},
 						Required: true,
@@ -47,6 +47,19 @@ func main() {
 				Name:   "pull",
 				Usage:  "Pull environment variables from remote environment",
 				Action: actions.PullAction(),
+			},
+			{
+				Name:  "run",
+				Usage: "Run with project command",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "command",
+						Usage:    "Execute the command along with envsync",
+						Aliases:  []string{"c"},
+						Required: true,
+					},
+				},
+				Action: actions.RunAction(),
 			},
 		},
 	}
