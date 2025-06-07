@@ -51,11 +51,14 @@ func PushAction() cli.ActionFunc {
 			}
 
 			summary := envDiff.GetSummary()
-			c.App.Writer.Write([]byte(fmt.Sprintf("Environment variables synced successfully!\n")))
-			c.App.Writer.Write([]byte(fmt.Sprintf("Added: %d, Updated: %d, Deleted: %d\n",
-				summary.AddCount, summary.UpdateCount, summary.DeleteCount)))
+			c.App.Writer.Write([]byte("\n🎉 Environment variables synced successfully!\n"))
+			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			c.App.Writer.Write([]byte(fmt.Sprintf("✅ Added:   %d variables\n", summary.AddCount)))
+			c.App.Writer.Write([]byte(fmt.Sprintf("🔄 Updated: %d variables\n", summary.UpdateCount)))
+			c.App.Writer.Write([]byte(fmt.Sprintf("🗑️  Deleted: %d variables\n", summary.DeleteCount)))
+			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"))
 		} else {
-			c.App.Writer.Write([]byte("No changes detected. Environment is already in sync.\n"))
+			c.App.Writer.Write([]byte("\n✨ No changes detected. Environment is already in sync.\n\n"))
 		}
 
 		return nil
