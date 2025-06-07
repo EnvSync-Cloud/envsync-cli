@@ -47,13 +47,13 @@ func main() {
 				Action: actions.InitAction(),
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "app-id",
+						Name:     "app",
 						Usage:    "App ID of your application",
 						Aliases:  []string{"a"},
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "env-type-id",
+						Name:     "env-type",
 						Usage:    "Type of your environment",
 						Aliases:  []string{"e"},
 						Required: true,
@@ -95,18 +95,6 @@ func main() {
 						Usage:  "Create a new application.",
 						Action: actions.CreateApplication(),
 						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "name",
-								Usage:    "Name of the application",
-								Aliases:  []string{"n"},
-								Required: true,
-							},
-							&cli.StringFlag{
-								Name:     "description",
-								Usage:    "Description of the application",
-								Aliases:  []string{"d"},
-								Required: false,
-							},
 							&cli.BoolFlag{
 								Name:    "json",
 								Usage:   "Output application details in JSON format",

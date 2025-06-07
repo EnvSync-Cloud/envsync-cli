@@ -51,6 +51,9 @@ func InitAction() cli.ActionFunc {
 				break
 			}
 		}
+		if envTypeID == "" {
+			return fmt.Errorf("environment type '%s' not found", envType)
+		}
 
 		config := models.ProjectEnvConfig{
 			AppID:   appID,
