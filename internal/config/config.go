@@ -16,16 +16,14 @@ var cfg AppConfig
 var once sync.Once
 var backendURL string
 
-const configDirPath = "/.config/envsync"
-
 func New() AppConfig {
 	once.Do(func() {
-		home, err := os.UserHomeDir()
+		configDir, err := os.UserConfigDir()
 		if err != nil {
 			panic(err)
 		}
 
-		filePath := filepath.Join(home, configDirPath, "config.json")
+		filePath := filepath.Join(configDir, "envsync", "config.json")
 
 		// Ensure directory exists
 		dirPath := filepath.Dir(filePath)
@@ -33,7 +31,7 @@ func New() AppConfig {
 			panic(err)
 		}
 
-		// Create file if it doesn't exist
+		// Create a file if it doesn't exist
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			file, err := os.Create(filePath)
 			if err != nil {
@@ -59,23 +57,23 @@ func (c *AppConfig) WriteConfigFile() error {
 		return err
 	}
 
-	home, err := os.UserHomeDir()
+	configDir, err := os.UserConfigDir()
 	if err != nil {
 		panic(err)
 	}
 
-	filePath := filepath.Join(home, configDirPath, "config.json")
+	filePath := filepath.Join(configDir, "envsync", "config.json")
 
 	return os.WriteFile(filePath, data, 0644)
 }
 
 func ReadConfigFile() (AppConfig, error) {
-	home, err := os.UserHomeDir()
+	configDir, err := os.UserConfigDir()
 	if err != nil {
 		panic(err)
 	}
 
-	filePath := filepath.Join(home, configDirPath, "config.json")
+	filePath := filepath.Join(configDir, "envsync", "config.json")
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
