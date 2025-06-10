@@ -1,14 +1,15 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func Whoami() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		authService := services.NewAuthService()
 
 		// Get user info from the auth service
@@ -19,22 +20,22 @@ func Whoami() cli.ActionFunc {
 		}
 
 		// If JSON flag is set, print in JSON format
-		if c.Bool("json") {
+		if cmd.Bool("json") {
 			jsonOutput, err := json.MarshalIndent(userInfo, "", "  ")
 			if err != nil {
 				return err
 			}
-			c.App.Writer.Write([]byte(jsonOutput))
+			cmd.Writer.Write([]byte(jsonOutput))
 			return nil
 		}
 
 		// Print user info
-		c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
-		c.App.Writer.Write([]byte("User ID: " + userInfo.UserId + "\n"))
-		c.App.Writer.Write([]byte("Email: " + userInfo.Email + "\n"))
-		c.App.Writer.Write([]byte("Organization: " + userInfo.Org + "\n"))
-		c.App.Writer.Write([]byte("Role: " + userInfo.Role + "\n"))
-		c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		cmd.Writer.Write([]byte("User ID: " + userInfo.UserId + "\n"))
+		cmd.Writer.Write([]byte("Email: " + userInfo.Email + "\n"))
+		cmd.Writer.Write([]byte("Organization: " + userInfo.Org + "\n"))
+		cmd.Writer.Write([]byte("Role: " + userInfo.Role + "\n"))
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 
 		return nil
 	}

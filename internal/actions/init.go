@@ -1,11 +1,12 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
@@ -13,9 +14,9 @@ import (
 )
 
 func InitAction() cli.ActionFunc {
-	return func(ctx *cli.Context) error {
-		app := ctx.String("app")
-		envType := ctx.String("env-type")
+	return func(ctx context.Context, cmd *cli.Command) error {
+		app := cmd.String("app")
+		envType := cmd.String("env-type")
 
 		// Get All Apps
 		appService := services.NewAppService()

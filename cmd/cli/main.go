@@ -1,21 +1,29 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/actions"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/logger"
 )
 
 func main() {
-	app := &cli.App{
-		Name:                 "envsync",
-		Usage:                "Sync environment variables between local and remote environments",
-		Action:               actions.IndexAction(),
-		Suggest:              true,
-		EnableBashCompletion: true,
+	app := &cli.Command{
+		Name:                  "envsync",
+		Usage:                 "Sync environment variables between local and remote environments",
+		Action:                actions.IndexAction(),
+		Suggest:               true,
+		EnableShellCompletion: true,
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			l := logger.NewLogger()
+			c := context.WithValue(ctx, constants.LoggerKey, l)
+			return c, nil
+		},
 		Commands: []*cli.Command{
 			{
 				Name:     "login",
@@ -90,7 +98,7 @@ func main() {
 			{
 				Name:  "app",
 				Usage: "Interact with your applications.",
-				Subcommands: []*cli.Command{
+				Commands: []*cli.Command{
 					{
 						Name:   "create",
 						Usage:  "Create a new application.",
@@ -144,7 +152,7 @@ func main() {
 			{
 				Name:  "env-type",
 				Usage: "Manage environment types.",
-				Subcommands: []*cli.Command{
+				Commands: []*cli.Command{
 					{
 						Name:   "list",
 						Usage:  "List all environment types.",
@@ -162,7 +170,7 @@ func main() {
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -2,17 +2,18 @@ package actions
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func CreateApplication() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		scanner := bufio.NewScanner(os.Stdin)
 
 		// Step 1: Get application name
@@ -73,13 +74,13 @@ func CreateApplication() cli.ActionFunc {
 		}
 
 		// Step 7: Success message
-		c.App.Writer.Write([]byte("✅ Application created successfully!\n"))
-		c.App.Writer.Write([]byte(fmt.Sprintf("📛 Name: %s\n", name)))
-		c.App.Writer.Write([]byte(fmt.Sprintf("📝 Description: %s\n", description)))
+		cmd.Writer.Write([]byte("✅ Application created successfully!\n"))
+		cmd.Writer.Write([]byte(fmt.Sprintf("📛 Name: %s\n", name)))
+		cmd.Writer.Write([]byte(fmt.Sprintf("📝 Description: %s\n", description)))
 		if len(metadata) > 0 {
-			c.App.Writer.Write([]byte("🏷️  Metadata:\n"))
+			cmd.Writer.Write([]byte("🏷️  Metadata:\n"))
 			for key, value := range metadata {
-				c.App.Writer.Write([]byte(fmt.Sprintf("   %s: %v\n", key, value)))
+				cmd.Writer.Write([]byte(fmt.Sprintf("   %s: %v\n", key, value)))
 			}
 		}
 
@@ -88,7 +89,7 @@ func CreateApplication() cli.ActionFunc {
 }
 
 func ListApplications() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		// Step1: Initialize application service
 		as := services.NewAppService()
 
@@ -99,13 +100,13 @@ func ListApplications() cli.ActionFunc {
 		}
 
 		// Step3: Print applications
-		c.App.Writer.Write([]byte("🚀 Available Applications:\n"))
+		cmd.Writer.Write([]byte("🚀 Available Applications:\n"))
 		for _, app := range apps {
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
-			c.App.Writer.Write([]byte(fmt.Sprintf("📛 Name: %s\n", app.Name)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("🆔 ID: %s\n", app.ID)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("📝 Description: %s\n", app.Description)))
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			cmd.Writer.Write([]byte(fmt.Sprintf("📛 Name: %s\n", app.Name)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("🆔 ID: %s\n", app.ID)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("📝 Description: %s\n", app.Description)))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 		}
 
 		return nil
@@ -113,7 +114,7 @@ func ListApplications() cli.ActionFunc {
 }
 
 func DeleteApplication() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		scanner := bufio.NewScanner(os.Stdin)
 
 		// Step 1: Initialize application service
@@ -126,19 +127,19 @@ func DeleteApplication() cli.ActionFunc {
 		}
 
 		if len(apps) == 0 {
-			c.App.Writer.Write([]byte("📭 No applications found.\n"))
+			cmd.Writer.Write([]byte("📭 No applications found.\n"))
 			return nil
 		}
 
 		// Step 3: Display available applications
-		c.App.Writer.Write([]byte("🚀 Available Applications:\n"))
+		cmd.Writer.Write([]byte("🚀 Available Applications:\n"))
 		for i, app := range apps {
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
-			c.App.Writer.Write([]byte(fmt.Sprintf("%d. 📛 Name: %s\n", i+1, app.Name)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("   🆔 ID: %s\n", app.ID)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("   📝 Description: %s\n", app.Description)))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			cmd.Writer.Write([]byte(fmt.Sprintf("%d. 📛 Name: %s\n", i+1, app.Name)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("   🆔 ID: %s\n", app.ID)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("   📝 Description: %s\n", app.Description)))
 		}
-		c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 
 		// Step 4: Get user selection
 		fmt.Print("🎯 Enter application name or ID to delete: ")
@@ -179,7 +180,7 @@ func DeleteApplication() cli.ActionFunc {
 
 		confirmation := strings.TrimSpace(strings.ToLower(scanner.Text()))
 		if confirmation != "yes" && confirmation != "y" {
-			c.App.Writer.Write([]byte("❎ Deletion cancelled.\n"))
+			cmd.Writer.Write([]byte("❎ Deletion cancelled.\n"))
 			return nil
 		}
 
@@ -189,8 +190,8 @@ func DeleteApplication() cli.ActionFunc {
 		}
 
 		// Step 8: Success message
-		c.App.Writer.Write([]byte("✅ Application deleted successfully!\n"))
-		c.App.Writer.Write([]byte(fmt.Sprintf("📛 Deleted: %s\n", selectedApp.Name)))
+		cmd.Writer.Write([]byte("✅ Application deleted successfully!\n"))
+		cmd.Writer.Write([]byte(fmt.Sprintf("📛 Deleted: %s\n", selectedApp.Name)))
 
 		return nil
 	}

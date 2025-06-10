@@ -1,14 +1,15 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func PushAction() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		// Step1: Initialize sync service
 		syncService := services.NewSyncService()
 
@@ -51,14 +52,14 @@ func PushAction() cli.ActionFunc {
 			}
 
 			summary := envDiff.GetSummary()
-			c.App.Writer.Write([]byte("\n🎉 Environment variables synced successfully!\n"))
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
-			c.App.Writer.Write([]byte(fmt.Sprintf("✅ Added:   %d variables\n", summary.AddCount)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("🔄 Updated: %d variables\n", summary.UpdateCount)))
-			c.App.Writer.Write([]byte(fmt.Sprintf("🗑️  Deleted: %d variables\n", summary.DeleteCount)))
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"))
+			cmd.Writer.Write([]byte("\n🎉 Environment variables synced successfully!\n"))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			cmd.Writer.Write([]byte(fmt.Sprintf("✅ Added:   %d variables\n", summary.AddCount)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("🔄 Updated: %d variables\n", summary.UpdateCount)))
+			cmd.Writer.Write([]byte(fmt.Sprintf("🗑️  Deleted: %d variables\n", summary.DeleteCount)))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"))
 		} else {
-			c.App.Writer.Write([]byte("\n✨ No changes detected. Environment is already in sync.\n\n"))
+			cmd.Writer.Write([]byte("\n✨ No changes detected. Environment is already in sync.\n\n"))
 		}
 
 		return nil

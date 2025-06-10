@@ -1,12 +1,14 @@
 package actions
 
 import (
+	"context"
+
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func Logout() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		authService := services.NewAuthService()
 
 		// Call the logout function in the auth service
@@ -14,7 +16,7 @@ func Logout() cli.ActionFunc {
 			return err
 		}
 
-		c.App.Writer.Write([]byte("Successfully logged out.\n"))
+		cmd.Writer.Write([]byte("Successfully logged out.\n"))
 		return nil
 	}
 }

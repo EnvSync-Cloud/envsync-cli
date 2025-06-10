@@ -1,14 +1,15 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func ListEnvTypes() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(c context.Context, cmd *cli.Command) error {
 		envTypeService := services.NewEnvTypeService()
 
 		// Get user info from the auth service
@@ -19,21 +20,21 @@ func ListEnvTypes() cli.ActionFunc {
 		}
 
 		// If JSON flag is set, print in JSON format
-		if c.Bool("json") {
+		if cmd.Bool("json") {
 			jsonOutput, err := json.MarshalIndent(envTypes, "", "  ")
 			if err != nil {
 				return err
 			}
-			c.App.Writer.Write([]byte(jsonOutput))
+			cmd.Writer.Write([]byte(jsonOutput))
 			return nil
 		}
 
 		// Print environment types
-		c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 		for _, envType := range envTypes {
-			c.App.Writer.Write([]byte("ID: " + envType.ID + "\n"))
-			c.App.Writer.Write([]byte("Name: " + envType.Name + "\n"))
-			c.App.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+			cmd.Writer.Write([]byte("ID: " + envType.ID + "\n"))
+			cmd.Writer.Write([]byte("Name: " + envType.Name + "\n"))
+			cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
 		}
 
 		return nil

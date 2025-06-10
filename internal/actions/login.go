@@ -1,17 +1,18 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/pkg/browser"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func LoginAction() cli.ActionFunc {
-	return func(c *cli.Context) error {
+	return func(ctx context.Context, cmd *cli.Command) error {
 		authService := services.NewAuthService()
 
 		// Step 1: Initiate the login process
@@ -21,7 +22,7 @@ func LoginAction() cli.ActionFunc {
 		}
 
 		// Step 2: Display login information to user
-		if err := displayLoginInstructions(credentials, c); err != nil {
+		if err := displayLoginInstructions(credentials, cmd); err != nil {
 			return err
 		}
 
@@ -51,9 +52,9 @@ func LoginAction() cli.ActionFunc {
 }
 
 // displayLoginInstructions shows the user what they need to do to authenticate
-func displayLoginInstructions(credentials interface{}, c *cli.Context) error {
+func displayLoginInstructions(credentials interface{}, cmd *cli.Command) error {
 	// Print as JSON if requested
-	if c.Bool("json") {
+	if cmd.Bool("json") {
 		return printAsJSON(credentials)
 	}
 

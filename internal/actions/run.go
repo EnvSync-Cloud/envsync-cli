@@ -1,16 +1,17 @@
 package actions
 
 import (
+	"context"
 	"os"
 	"strings"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func RunAction() cli.ActionFunc {
-	return func(c *cli.Context) error {
-		cmd := strings.Split(c.String("command"), " ")
+	return func(ctx context.Context, cmd *cli.Command) error {
+		c := strings.Split(cmd.String("command"), " ")
 
 		// Step1: Initialize Sync service
 		s := services.NewSyncService()
@@ -47,7 +48,7 @@ func RunAction() cli.ActionFunc {
 
 		// Step6: Initialize PTY-based Redactor service and run redactor
 		r := services.NewRedactorService(redactedValues)
-		_ = r.RunRedactor(cmd)
+		_ = r.RunRedactor(c)
 
 		return nil
 	}
