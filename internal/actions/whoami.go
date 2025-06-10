@@ -25,7 +25,7 @@ func Whoami() cli.ActionFunc {
 			if err != nil {
 				return err
 			}
-			cmd.Writer.Write([]byte(jsonOutput))
+			cmd.Writer.Write(append(jsonOutput, '\n'))
 			return nil
 		}
 

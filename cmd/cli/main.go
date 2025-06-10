@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
+	"go.uber.org/zap"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/actions"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
@@ -19,10 +20,24 @@ func main() {
 		Action:                actions.IndexAction(),
 		Suggest:               true,
 		EnableShellCompletion: true,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "json",
+				Usage:       "Output in JSON format",
+				Aliases:     []string{"j"},
+				Value:       false,
+				DefaultText: "false",
+			},
+		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 			l := logger.NewLogger()
 			c := context.WithValue(ctx, constants.LoggerKey, l)
 			return c, nil
+		},
+		After: func(ctx context.Context, cmd *cli.Command) error {
+			l, _ := ctx.Value(constants.LoggerKey).(*zap.Logger)
+			l.Sync()
+			return nil
 		},
 		Commands: []*cli.Command{
 			{
@@ -32,16 +47,9 @@ func main() {
 				Category: "Auth",
 			},
 			{
-				Name:   "whoami",
-				Usage:  "Display current user information",
-				Action: actions.Whoami(),
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:    "json",
-						Usage:   "Output user info in JSON format",
-						Aliases: []string{"j"},
-					},
-				},
+				Name:     "whoami",
+				Usage:    "Display current user information",
+				Action:   actions.Whoami(),
 				Category: "Auth",
 			},
 			{
@@ -100,17 +108,9 @@ func main() {
 				Usage: "Interact with your applications.",
 				Commands: []*cli.Command{
 					{
-						Name:   "create",
-						Usage:  "Create a new application.",
-						Action: actions.CreateApplication(),
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "json",
-								Usage:   "Output application details in JSON format",
-								Aliases: []string{"j"},
-								Value:   false,
-							},
-						},
+						Name:     "create",
+						Usage:    "Create a new application.",
+						Action:   actions.CreateApplication(),
 						Category: "Application",
 					},
 					{
@@ -124,27 +124,13 @@ func main() {
 								Aliases:  []string{"i"},
 								Required: true,
 							},
-							&cli.BoolFlag{
-								Name:    "json",
-								Usage:   "Output deletion confirmation in JSON format",
-								Aliases: []string{"j"},
-								Value:   false,
-							},
 						},
 						Category: "Application",
 					},
 					{
-						Name:   "list",
-						Usage:  "List all applications.",
-						Action: actions.ListApplications(),
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "json",
-								Usage:   "Output applications in JSON format",
-								Aliases: []string{"j"},
-								Value:   false,
-							},
-						},
+						Name:     "list",
+						Usage:    "List all applications.",
+						Action:   actions.ListApplications(),
 						Category: "Application",
 					},
 				},
@@ -157,13 +143,6 @@ func main() {
 						Name:   "list",
 						Usage:  "List all environment types.",
 						Action: actions.ListEnvTypes(),
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "json",
-								Usage:   "Output environment types in JSON format",
-								Aliases: []string{"j"},
-							},
-						},
 					},
 				},
 			},
