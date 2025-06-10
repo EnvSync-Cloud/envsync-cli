@@ -15,6 +15,6 @@ func ReadEnv() (map[string]string, error) {
 		// Return empty map if .env file doesn't exist
 		return make(map[string]string), nil
 	}
-	
+
 	return godotenv.Read(".env")
 }

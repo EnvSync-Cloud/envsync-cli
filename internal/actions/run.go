@@ -45,7 +45,7 @@ func RunAction() cli.ActionFunc {
 			redactedValues = append(redactedValues, env.Value)
 		}
 
-		// Step6: Initialize Redactor service and run redactor
+		// Step6: Initialize PTY-based Redactor service and run redactor
 		r := services.NewRedactorService(redactedValues)
 		_ = r.RunRedactor(cmd)
 
