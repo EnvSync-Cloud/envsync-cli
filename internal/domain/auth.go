@@ -56,7 +56,7 @@ func (at *AccessToken) GetAuthorizationHeader() string {
 	return at.TokenType + " " + at.Token
 }
 
-// AuthResult represents the final result of authentication process
+// AuthResult represents the final result of an authentication process
 type AuthResult struct {
 	Success     bool
 	AccessToken *AccessToken

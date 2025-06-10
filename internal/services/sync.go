@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/joho/godotenv"
+
 	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/helper"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/mappers"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository"
 )
@@ -68,7 +69,12 @@ func (s *sync) GetAllEnv(appID, envTypeID string) ([]*domain.EnvironmentVariable
 }
 
 func (s *sync) ReadLocalEnv() (map[string]string, error) {
-	return helper.ReadEnv()
+	if _, err := os.Stat(".env"); os.IsNotExist(err) {
+		// Return empty map if .env file doesn't exist
+		return make(map[string]string), nil
+	}
+
+	return godotenv.Read(".env")
 }
 
 func (s *sync) CalculateEnvDiff(local map[string]string, remote map[string]string) *domain.EnvironmentSync {
@@ -89,7 +95,7 @@ func (s *sync) CalculateEnvDiff(local map[string]string, remote map[string]strin
 }
 
 func (s *sync) WriteLocalEnv(env map[string]string) error {
-	return helper.WriteEnv(env)
+	return godotenv.Write(env, ".env")
 }
 
 func (s *sync) PushEnv(env *domain.EnvironmentSync) error {

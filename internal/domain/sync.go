@@ -2,12 +2,12 @@ package domain
 
 import "time"
 
-// AppEnvironment represents an environment configuration for an application
-type AppEnvironment struct {
+// EnvironmentType represents an environment configuration for an application
+type EnvironmentType struct {
 	ID        string
 	OrgID     string
+	AppID     string
 	Name      string
-	Variables []EnvironmentVariable
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

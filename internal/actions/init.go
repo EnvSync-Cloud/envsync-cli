@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/models"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v2"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func InitAction() cli.ActionFunc {
@@ -55,9 +56,9 @@ func InitAction() cli.ActionFunc {
 			return fmt.Errorf("environment type '%s' not found", envType)
 		}
 
-		config := models.ProjectEnvConfig{
-			AppID:   appID,
-			EnvType: envTypeID,
+		config := domain.SyncConfig{
+			AppID:     appID,
+			EnvTypeID: envTypeID,
 		}
 
 		// Check if the project config file exists

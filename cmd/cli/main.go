@@ -4,13 +4,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/actions"
 	"github.com/urfave/cli/v2"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/actions"
 )
 
 func main() {
 	app := &cli.App{
-		Name:                 "envsync-cli",
+		Name:                 "envsync",
 		Usage:                "Sync environment variables between local and remote environments",
 		Action:               actions.IndexAction(),
 		Suggest:              true,
@@ -48,7 +49,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "app",
-						Usage:    "App ID of your application",
+						Usage:    "Name of your application",
 						Aliases:  []string{"a"},
 						Required: true,
 					},
@@ -102,6 +103,7 @@ func main() {
 								Value:   false,
 							},
 						},
+						Category: "Application",
 					},
 					{
 						Name:   "delete",
@@ -121,6 +123,7 @@ func main() {
 								Value:   false,
 							},
 						},
+						Category: "Application",
 					},
 					{
 						Name:   "list",
@@ -134,6 +137,7 @@ func main() {
 								Value:   false,
 							},
 						},
+						Category: "Application",
 					},
 				},
 			},
