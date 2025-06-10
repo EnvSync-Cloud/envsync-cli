@@ -2,16 +2,6 @@ package domain
 
 import "time"
 
-// EnvironmentType represents an environment configuration for an application
-type EnvironmentType struct {
-	ID        string
-	OrgID     string
-	AppID     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
-
 // EnvironmentVariable represents a single environment variable
 type EnvironmentVariable struct {
 	Key   string

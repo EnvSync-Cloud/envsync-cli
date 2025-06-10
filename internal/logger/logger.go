@@ -43,13 +43,18 @@ func NewLogger() *zap.Logger {
 func getLogPath() string {
 	var logDir string
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic("failed to get user home directory: " + err.Error())
+	}
+
 	switch runtime.GOOS {
 	case "windows":
-		logDir = filepath.Join(os.Getenv("APPDATA"), "envsync", "logs")
+		logDir = filepath.Join(homeDir, "envsync", "logs")
 	case "darwin": // macOS
-		logDir = filepath.Join(os.Getenv("HOME"), ".local", "envsync", "logs")
+		logDir = filepath.Join(homeDir, ".local", "envsync", "logs")
 	default: // Linux and others
-		logDir = filepath.Join(os.Getenv("HOME"), ".local", "envsync", "logs")
+		logDir = filepath.Join(homeDir, ".local", "envsync", "logs")
 	}
 
 	// Create directory if it doesn't exist

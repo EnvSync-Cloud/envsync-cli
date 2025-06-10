@@ -19,3 +19,13 @@ func NewApplication(name, description string, metadata map[string]any) *Applicat
 		Metadata:    metadata,
 	}
 }
+
+// EnvironmentType represents an environment configuration for an application
+type EnvironmentType struct {
+	ID        string
+	OrgID     string
+	AppID     string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}

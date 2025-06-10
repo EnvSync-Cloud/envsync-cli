@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v3"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func PullAction() cli.ActionFunc {
@@ -13,20 +14,14 @@ func PullAction() cli.ActionFunc {
 		// Step 1: Initiate sync service
 		syncService := services.NewSyncService()
 
-		// Step2:  Check if sync config available.
+		// Step2: Check if sync config available.
 		// If not found throw error.
-		if err := syncService.CheckSyncConfig(); err != nil {
+		if err := syncService.SyncConfigExist(); err != nil {
 			return err
 		}
 
-		// Step3: Read the config file and get the data
-		cfg, err := syncService.ReadConfigData()
-		if err != nil {
-			return err
-		}
-
-		// Step4: Fetch env from remote
-		remoteEnvs, err := syncService.GetAllEnv(cfg.AppID, cfg.EnvTypeID)
+		// Step3: Fetch env from remote
+		remoteEnvs, err := syncService.ReadRemoteEnv()
 		if err != nil {
 			return err
 		}
@@ -37,7 +32,7 @@ func PullAction() cli.ActionFunc {
 			remoteEnvMap[env.Key] = env.Value
 		}
 
-		// Step5: Calculate the diff from local env
+		// Step4: Calculate the diff from local env
 		localEnvs, err := syncService.ReadLocalEnv()
 		if err != nil {
 			return err
@@ -45,7 +40,7 @@ func PullAction() cli.ActionFunc {
 
 		envDiff := syncService.CalculateEnvDiff(localEnvs, remoteEnvMap)
 
-		// Step6: Write to local env
+		// Step5: Write to local env
 		if envDiff.HasChanges() {
 			// Write remote environment variables to local .env file
 			if err := syncService.WriteLocalEnv(remoteEnvMap); err != nil {

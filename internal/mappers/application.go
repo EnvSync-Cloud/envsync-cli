@@ -6,15 +6,15 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/responses"
 )
 
-func AppResponseToDomain(appResp responses.AppResponse) domain.Application {
+func AppResponseToDomain(res responses.AppResponse) domain.Application {
 	return domain.Application{
-		ID:          appResp.ID,
-		Name:        appResp.Name,
-		Description: appResp.Description,
-		Metadata:    appResp.Metadata,
-		OrgID:       appResp.OrgID,
-		CreatedAt:   appResp.CreatedAt,
-		UpdatedAt:   appResp.UpdatedAt,
+		ID:          res.ID,
+		Name:        res.Name,
+		Description: res.Description,
+		Metadata:    res.Metadata,
+		OrgID:       res.OrgID,
+		CreatedAt:   res.CreatedAt,
+		UpdatedAt:   res.UpdatedAt,
 	}
 }
 
@@ -23,5 +23,16 @@ func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 		Name:        app.Name,
 		Description: app.Description,
 		Metadata:    app.Metadata,
+	}
+}
+
+func EnvTypeResponseToDomain(res responses.EnvTypeResponse) domain.EnvironmentType {
+	return domain.EnvironmentType{
+		ID:        res.ID,
+		OrgID:     res.OrgID,
+		AppID:     "",
+		Name:      res.Name,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
 	}
 }

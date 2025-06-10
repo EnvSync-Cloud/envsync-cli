@@ -15,16 +15,16 @@ import (
 
 type SyncService interface {
 	ReadConfigData() (domain.SyncConfig, error)
-	CheckSyncConfig() error
+	SyncConfigExist() error
 	ReadLocalEnv() (map[string]string, error)
-	GetAllEnv(appID, envTypeID string) ([]*domain.EnvironmentVariable, error)
+	ReadRemoteEnv() ([]*domain.EnvironmentVariable, error)
 	CalculateEnvDiff(local map[string]string, remote map[string]string) *domain.EnvironmentSync
 	WriteLocalEnv(env map[string]string) error
-	PushEnv(env *domain.EnvironmentSync) error
+	WriteRemoteEnv(env *domain.EnvironmentSync) error
 }
 
 type sync struct {
-	repo       repository.SyncRepository
+	repo       repository.EnvVariableRepository
 	projectCfg domain.SyncConfig
 }
 
@@ -32,15 +32,15 @@ func NewSyncService() SyncService {
 	var projCfg domain.SyncConfig
 	_ = readTOMLConfig(&projCfg)
 
-	repo := repository.NewSyncRepository(projCfg.AppID, projCfg.EnvTypeID)
+	r := repository.NewEnvVariableRepository(projCfg.AppID, projCfg.EnvTypeID)
 
 	return &sync{
-		repo:       repo,
+		repo:       r,
 		projectCfg: projCfg,
 	}
 }
 
-func (s *sync) CheckSyncConfig() error {
+func (s *sync) SyncConfigExist() error {
 	if _, err := os.Stat(constants.DefaultProjectConfig); errors.Is(err, os.ErrNotExist) {
 		return errors.New("project configuration file not found")
 	}
@@ -57,7 +57,7 @@ func (s *sync) ReadConfigData() (domain.SyncConfig, error) {
 	return cfg, nil
 }
 
-func (s *sync) GetAllEnv(appID, envTypeID string) ([]*domain.EnvironmentVariable, error) {
+func (s *sync) ReadRemoteEnv() ([]*domain.EnvironmentVariable, error) {
 	envRes, err := s.repo.GetAllEnv()
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (s *sync) WriteLocalEnv(env map[string]string) error {
 	return godotenv.Write(env, ".env")
 }
 
-func (s *sync) PushEnv(env *domain.EnvironmentSync) error {
+func (s *sync) WriteRemoteEnv(env *domain.EnvironmentSync) error {
 	toCreate := env.ToAdd
 	toUpdate := env.ToUpdate
 	toDelete := env.ToDelete

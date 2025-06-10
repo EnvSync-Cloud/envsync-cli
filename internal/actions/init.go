@@ -18,10 +18,10 @@ func InitAction() cli.ActionFunc {
 		app := cmd.String("app")
 		envType := cmd.String("env-type")
 
-		// Get All Apps
+		// Initialize the application service
 		appService := services.NewAppService()
-		envTypeService := services.NewEnvTypeService()
 
+		// Get All Apps
 		apps, err := appService.GetAllApps()
 		if err != nil {
 			return fmt.Errorf("failed to fetch applications: %w", err)
@@ -40,7 +40,7 @@ func InitAction() cli.ActionFunc {
 		}
 
 		// Get All Environment Types
-		envTypes, err := envTypeService.GetAllEnvTypes()
+		envTypes, err := appService.ReadAppEnvTypes()
 		if err != nil {
 			return fmt.Errorf("failed to fetch environment types: %w", err)
 		}

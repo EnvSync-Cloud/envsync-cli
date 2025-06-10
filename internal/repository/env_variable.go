@@ -3,14 +3,15 @@ package repository
 import (
 	"fmt"
 
+	"resty.dev/v3"
+
 	"github.com/EnvSync-Cloud/envsync-cli/internal/config"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/requests"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/responses"
-	"resty.dev/v3"
 )
 
-type SyncRepository interface {
-	GetAllEnv() ([]responses.EnvironmentVariables, error)
+type EnvVariableRepository interface {
+	GetAllEnv() ([]responses.EnvironmentVariable, error)
 	BatchCreateEnv(env requests.BatchSyncEnvRequest) error
 	BatchUpdateEnv(env requests.BatchSyncEnvRequest) error
 	BatchDeleteEnv(env requests.BatchDeleteRequest) error
@@ -22,7 +23,7 @@ type syncRepo struct {
 	envTypeID string
 }
 
-func NewSyncRepository(appID, envTypeID string) SyncRepository {
+func NewEnvVariableRepository(appID, envTypeID string) EnvVariableRepository {
 	cfg := config.New()
 	client := resty.New().
 		SetDisableWarn(true).
@@ -37,8 +38,8 @@ func NewSyncRepository(appID, envTypeID string) SyncRepository {
 	}
 }
 
-func (s *syncRepo) GetAllEnv() ([]responses.EnvironmentVariables, error) {
-	var env []responses.EnvironmentVariables
+func (s *syncRepo) GetAllEnv() ([]responses.EnvironmentVariable, error) {
+	var env []responses.EnvironmentVariable
 
 	res, err := s.client.
 		R().

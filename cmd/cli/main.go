@@ -16,7 +16,7 @@ import (
 func main() {
 	app := &cli.Command{
 		Name:                  "envsync",
-		Usage:                 "Sync environment variables between local and remote environments",
+		Usage:                 "sync environment variables between local and remote environments",
 		Action:                actions.IndexAction(),
 		Suggest:               true,
 		EnableShellCompletion: true,
@@ -42,21 +42,21 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:     "login",
-				Usage:    "Login to EnvSync Cloud",
+				Usage:    "Login to Envsync Cloud",
 				Action:   actions.LoginAction(),
-				Category: "Auth",
+				Category: "AUTH",
 			},
 			{
 				Name:     "whoami",
 				Usage:    "Display current user information",
 				Action:   actions.Whoami(),
-				Category: "Auth",
+				Category: "AUTH",
 			},
 			{
 				Name:     "logout",
-				Usage:    "Logout from EnvSync Cloud",
+				Usage:    "Logout from Envsync Cloud",
 				Action:   actions.Logout(),
-				Category: "Auth",
+				Category: "AUTH",
 			},
 			{
 				Name:   "init",
@@ -65,7 +65,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "app",
-						Usage:    "Name of your application",
+						Usage:    "Name of your app",
 						Aliases:  []string{"a"},
 						Required: true,
 					},
@@ -76,19 +76,18 @@ func main() {
 						Required: true,
 					},
 				},
-				Category: "Config",
 			},
 			{
 				Name:     "push",
 				Usage:    "Push environment variables to remote environment",
 				Action:   actions.PushAction(),
-				Category: "Sync",
+				Category: "SYNC",
 			},
 			{
 				Name:     "pull",
 				Usage:    "Pull environment variables from remote environment",
 				Action:   actions.PullAction(),
-				Category: "Sync",
+				Category: "SYNC",
 			},
 			{
 				Name:  "run",
@@ -105,33 +104,30 @@ func main() {
 			},
 			{
 				Name:  "app",
-				Usage: "Interact with your applications.",
+				Usage: "Interact with your apps.",
 				Commands: []*cli.Command{
 					{
-						Name:     "create",
-						Usage:    "Create a new application.",
-						Action:   actions.CreateApplication(),
-						Category: "Application",
+						Name:   "create",
+						Usage:  "Create a new app.",
+						Action: actions.CreateApplication(),
 					},
 					{
 						Name:   "delete",
-						Usage:  "Delete an application.",
+						Usage:  "Delete an app.",
 						Action: actions.DeleteApplication(),
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "id",
-								Usage:    "ID of the application to delete",
+								Usage:    "ID of the app to delete",
 								Aliases:  []string{"i"},
 								Required: true,
 							},
 						},
-						Category: "Application",
 					},
 					{
-						Name:     "list",
-						Usage:    "List all applications.",
-						Action:   actions.ListApplications(),
-						Category: "Application",
+						Name:   "list",
+						Usage:  "List all apps.",
+						Action: actions.ListApplications(),
 					},
 				},
 			},

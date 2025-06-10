@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v3"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func PushAction() cli.ActionFunc {
@@ -14,19 +15,13 @@ func PushAction() cli.ActionFunc {
 		syncService := services.NewSyncService()
 
 		// Step2: Check if the sync config available
-		// If not found thorw error
-		if err := syncService.CheckSyncConfig(); err != nil {
+		// If not found throw error
+		if err := syncService.SyncConfigExist(); err != nil {
 			return err
 		}
 
-		// Step3: Read the config file and get the data
-		cfg, err := syncService.ReadConfigData()
-		if err != nil {
-			return err
-		}
-
-		// Step4: Get remote env
-		remoteEnvs, err := syncService.GetAllEnv(cfg.AppID, cfg.EnvTypeID)
+		// Step3: Get remote env
+		remoteEnvs, err := syncService.ReadRemoteEnv()
 		if err != nil {
 			return err
 		}
@@ -37,7 +32,7 @@ func PushAction() cli.ActionFunc {
 			remoteEnvMap[env.Key] = env.Value
 		}
 
-		// Step5: Get local env
+		// Step4: Get local env
 		localEnvs, err := syncService.ReadLocalEnv()
 		if err != nil {
 			return err
@@ -47,7 +42,7 @@ func PushAction() cli.ActionFunc {
 		envDiff := syncService.CalculateEnvDiff(localEnvs, remoteEnvMap)
 
 		if envDiff.HasChanges() {
-			if err := syncService.PushEnv(envDiff); err != nil {
+			if err := syncService.WriteRemoteEnv(envDiff); err != nil {
 				return err
 			}
 

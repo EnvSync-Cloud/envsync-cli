@@ -11,17 +11,21 @@ type ApplicationService interface {
 	GetAppByID(id string) (domain.Application, error)
 	GetAllApps() ([]domain.Application, error)
 	DeleteApp(app domain.Application) error
+	ReadAppEnvTypes() ([]domain.EnvironmentType, error)
 }
 
 type app struct {
-	repo repository.ApplicationRepository
+	appRepo     repository.ApplicationRepository
+	envTypeRepo repository.EnvTypeRepository
 }
 
 func NewAppService() ApplicationService {
-	r := repository.NewApplicationRepository()
+	appRepo := repository.NewApplicationRepository()
+	envTypeRepo := repository.NewEnvTypeRepository()
 
 	return &app{
-		repo: r,
+		appRepo:     appRepo,
+		envTypeRepo: envTypeRepo,
 	}
 }
 
@@ -29,7 +33,7 @@ func (a *app) CreateApp(app *domain.Application) (domain.Application, error) {
 	req := mappers.DomainToAppRequest(app)
 
 	var appRes domain.Application
-	if res, err := a.repo.Create(req); err != nil {
+	if res, err := a.appRepo.Create(req); err != nil {
 		return domain.Application{}, err
 	} else {
 		appRes = mappers.AppResponseToDomain(res)
@@ -39,7 +43,7 @@ func (a *app) CreateApp(app *domain.Application) (domain.Application, error) {
 }
 
 func (a *app) GetAllApps() ([]domain.Application, error) {
-	res, err := a.repo.GetAll()
+	res, err := a.appRepo.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +57,7 @@ func (a *app) GetAllApps() ([]domain.Application, error) {
 }
 
 func (a *app) DeleteApp(app domain.Application) error {
-	if err := a.repo.Delete(app.ID); err != nil {
+	if err := a.appRepo.Delete(app.ID); err != nil {
 		return err
 	}
 
@@ -61,11 +65,25 @@ func (a *app) DeleteApp(app domain.Application) error {
 }
 
 func (a *app) GetAppByID(id string) (domain.Application, error) {
-	res, err := a.repo.GetByID(id)
+	res, err := a.appRepo.GetByID(id)
 	if err != nil {
 		return domain.Application{}, err
 	}
 
 	app := mappers.AppResponseToDomain(res)
 	return app, nil
+}
+
+func (a *app) ReadAppEnvTypes() ([]domain.EnvironmentType, error) {
+	res, err := a.envTypeRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var envTypes []domain.EnvironmentType
+	for _, envTypeResp := range res {
+		envTypes = append(envTypes, mappers.EnvTypeResponseToDomain(envTypeResp))
+	}
+
+	return envTypes, nil
 }

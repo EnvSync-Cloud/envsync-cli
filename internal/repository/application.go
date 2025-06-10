@@ -3,10 +3,11 @@ package repository
 import (
 	"fmt"
 
+	"resty.dev/v3"
+
 	"github.com/EnvSync-Cloud/envsync-cli/internal/config"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/requests"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/responses"
-	"resty.dev/v3"
 )
 
 type ApplicationRepository interface {

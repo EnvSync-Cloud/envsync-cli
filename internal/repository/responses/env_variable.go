@@ -1,6 +1,6 @@
 package responses
 
-type EnvironmentVariables struct {
+type EnvironmentVariable struct {
 	ID        string `json:"id"`
 	Key       string `json:"key"`
 	Value     string `json:"value"`

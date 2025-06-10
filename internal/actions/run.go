@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v3"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func RunAction() cli.ActionFunc {
@@ -17,36 +18,30 @@ func RunAction() cli.ActionFunc {
 		s := services.NewSyncService()
 
 		// Step2: Check sync config file exists
-		if err := s.CheckSyncConfig(); err != nil {
+		if err := s.SyncConfigExist(); err != nil {
 			return err
 		}
 
-		// Step3: Read sync config file
-		projCfg, err := s.ReadConfigData()
+		// Step3: Fetch the remote env
+		remoteEnv, err := s.ReadRemoteEnv()
 		if err != nil {
 			return err
 		}
 
-		// Step4: Fetch the remote env
-		remoteEnv, err := s.GetAllEnv(projCfg.AppID, projCfg.EnvTypeID)
-		if err != nil {
-			return err
-		}
-
-		// Step5: Set env in terminal environment
+		// Step4: Set env in terminal environment
 		for _, env := range remoteEnv {
 			if err := os.Setenv(env.Key, env.Value); err != nil {
 				return err
 			}
 		}
 
-		// Step6: Extract redactValues from remoteEnv
+		// Step5: Extract redactValues from remoteEnv
 		var redactedValues []string
 		for _, env := range remoteEnv {
 			redactedValues = append(redactedValues, env.Value)
 		}
 
-		// Step6: Initialize PTY-based Redactor service and run redactor
+		// Step6: Initialize redactor service and run redactor
 		r := services.NewRedactorService(redactedValues)
 		_ = r.RunRedactor(c)
 

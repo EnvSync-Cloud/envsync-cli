@@ -3,8 +3,9 @@ package actions
 import (
 	"context"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v3"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func Logout() cli.ActionFunc {

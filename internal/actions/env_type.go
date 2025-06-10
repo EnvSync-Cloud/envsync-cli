@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 	"github.com/urfave/cli/v3"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func ListEnvTypes() cli.ActionFunc {
 	return func(c context.Context, cmd *cli.Command) error {
-		envTypeService := services.NewEnvTypeService()
+		appService := services.NewAppService()
 
 		// Get user info from the auth service
-		envTypes, err := envTypeService.GetAllEnvTypes()
+		envTypes, err := appService.ReadAppEnvTypes()
 
 		if err != nil {
 			return err

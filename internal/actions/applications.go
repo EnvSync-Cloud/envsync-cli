@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/urfave/cli/v3"
+
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/urfave/cli/v3"
 )
 
 func CreateApplication() cli.ActionFunc {
