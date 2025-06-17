@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/pkg/browser"
+	"github.com/savioxavier/termlink"
 	"github.com/urfave/cli/v3"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/style"
 )
 
 func LoginAction() cli.ActionFunc {
@@ -67,7 +69,7 @@ func displayLoginInstructions(credentials interface{}, cmd *cli.Command) error {
 
 	fmt.Println("🔐 Authentication Required")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	fmt.Printf("1. Open this URL in your browser: %s\n", creds.GetVerificationUri())
+	fmt.Println(termlink.Link("1. Open this URL in your browser: ", style.LinkStyle.Render(creds.GetVerificationUri()), true))
 	fmt.Printf("2. Enter this verification code: %s\n", creds.GetUserCode())
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Println()
