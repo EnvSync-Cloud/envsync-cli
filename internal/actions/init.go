@@ -28,22 +28,21 @@ func InitAction() cli.ActionFunc {
 		}
 
 		// Check if the app exists
-		var appID string
+		var appData domain.Application
 		for _, a := range apps {
 			if a.Name == app {
-				appID = a.ID
+				appData = a
 				break
 			}
 		}
-		if appID == "" {
+		if appData.ID == "" {
 			return fmt.Errorf("application '%s' not found", app)
 		}
 
+		appID := appData.ID
+
 		// Get All Environment Types
-		envTypes, err := appService.ReadAppEnvTypes()
-		if err != nil {
-			return fmt.Errorf("failed to fetch environment types: %w", err)
-		}
+		envTypes := appData.EnvTypes
 
 		// Check if the environment type exists
 		var envTypeID string

@@ -8,6 +8,8 @@ type Application struct {
 	Description string
 	Metadata    map[string]any
 	OrgID       string
+	EnvTypes    []EnvType
+	EnvCount    string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -18,14 +20,4 @@ func NewApplication(name, description string, metadata map[string]any) *Applicat
 		Description: description,
 		Metadata:    metadata,
 	}
-}
-
-// EnvironmentType represents an environment configuration for an application
-type EnvironmentType struct {
-	ID        string
-	OrgID     string
-	AppID     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
 }
