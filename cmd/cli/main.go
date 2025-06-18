@@ -99,6 +99,11 @@ func main() {
 						Aliases:  []string{"c"},
 						Required: true,
 					},
+					&cli.StringSliceFlag{
+						Name:    "redact",
+						Usage:   "Values to redact from output (for testing)",
+						Aliases: []string{"r"},
+					},
 				},
 				Action: actions.RunAction(),
 			},

@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -69,8 +68,15 @@ func (r *redactor) RunRedactor(args []string) int {
 		<-sigChan
 		fmt.Fprintf(os.Stderr, "\nReceived interrupt signal, terminating command...\n")
 		cancel()
+		// Forward signal to the child process
 		if cmd.Process != nil {
-			cmd.Process.Kill()
+			cmd.Process.Signal(os.Interrupt)
+			// Give the process a chance to handle the signal gracefully
+			time.Sleep(100 * time.Millisecond)
+			// If still running, force kill
+			if cmd.ProcessState == nil || !cmd.ProcessState.Exited() {
+				cmd.Process.Kill()
+			}
 		}
 	}()
 
@@ -100,39 +106,64 @@ func (r *redactor) RunRedactor(args []string) int {
 	// Wait for completion or cancellation
 	select {
 	case exitCode := <-cmdDone:
-		// Wait for output processing to finish
-		<-outputDone
+		// Wait for output processing to finish with timeout
+		select {
+		case <-outputDone:
+		case <-time.After(1 * time.Second):
+			// Timeout waiting for output processing
+		}
 		cancel()
 		return exitCode
 	case <-ctx.Done():
-		return 1
+		// Wait for command to finish with timeout
+		select {
+		case exitCode := <-cmdDone:
+			return exitCode
+		case <-time.After(2 * time.Second):
+			// Force kill if still running
+			if cmd.Process != nil {
+				cmd.Process.Kill()
+			}
+			return 1
+		}
 	}
 }
 
 func (r *redactor) handleStdin(ctx context.Context, ptyMaster pty.Pty) {
-	buffer := make([]byte, 1024)
+	// Use a goroutine to handle stdin reading without blocking
+	stdinChan := make(chan []byte, 1)
+	go func() {
+		buffer := make([]byte, 1024)
+		for {
+			n, err := os.Stdin.Read(buffer)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Fprintf(os.Stderr, "Error reading stdin: %v\n", err)
+				}
+				return
+			}
+			if n > 0 {
+				// Make a copy of the buffer to send through channel
+				data := make([]byte, n)
+				copy(data, buffer[:n])
+				select {
+				case stdinChan <- data:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-			// Set a short read timeout to allow checking context
-			os.Stdin.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-
-			n, err := os.Stdin.Read(buffer)
-			if err != nil {
-				if !isTimeoutError(err) && err != io.EOF {
-					fmt.Fprintf(os.Stderr, "Error reading stdin: %v\n", err)
-				}
-				continue
-			}
-
-			if n > 0 {
-				_, writeErr := ptyMaster.Write(buffer[:n])
-				if writeErr != nil {
-					fmt.Fprintf(os.Stderr, "Error writing to PTY: %v\n", writeErr)
-					return
-				}
+		case data := <-stdinChan:
+			_, writeErr := ptyMaster.Write(data)
+			if writeErr != nil {
+				fmt.Fprintf(os.Stderr, "Error writing to PTY: %v\n", writeErr)
+				return
 			}
 		}
 	}
@@ -144,64 +175,175 @@ func (r *redactor) handleOutput(ctx context.Context, ptyMaster pty.Pty, done cha
 		done <- 0
 	}()
 
+	// Use a goroutine to handle PTY reading without blocking
+	outputChan := make(chan []byte, 1)
+	errorChan := make(chan error, 1)
+
+	go func() {
+		for {
+			n, err := ptyMaster.Read(buffer)
+			if n > 0 {
+				// Make a copy of the buffer to send through channel
+				data := make([]byte, n)
+				copy(data, buffer[:n])
+				select {
+				case outputChan <- data:
+				case <-ctx.Done():
+					return
+				}
+			}
+			if err != nil {
+				select {
+				case errorChan <- err:
+				case <-ctx.Done():
+				}
+				return
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-			n, err := ptyMaster.Read(buffer)
-			if n > 0 {
-				// Process and redact the output
-				text := string(buffer[:n])
-				redactedText := r.processAndRedactText(text)
+		case data := <-outputChan:
+			// Process and redact the output
+			text := string(data)
+			redactedText := r.processAndRedactText(text)
 
-				// Write the redacted content to stdout
-				_, writeErr := os.Stdout.Write([]byte(redactedText))
-				if writeErr != nil {
-					fmt.Fprintf(os.Stderr, "Error writing output: %v\n", writeErr)
-					return
-				}
-			}
-
-			if err != nil {
-				if err == io.EOF {
-					// Command finished
-					return
-				}
-				fmt.Fprintf(os.Stderr, "Error reading PTY: %v\n", err)
+			// Write the redacted content to stdout
+			_, writeErr := os.Stdout.Write([]byte(redactedText))
+			if writeErr != nil {
+				fmt.Fprintf(os.Stderr, "Error writing output: %v\n", writeErr)
 				return
 			}
+		case err := <-errorChan:
+			if err == io.EOF {
+				// Command finished
+				return
+			}
+			fmt.Fprintf(os.Stderr, "Error reading PTY: %v\n", err)
+			return
 		}
 	}
 }
 
 func (r *redactor) processAndRedactText(text string) string {
-	// Split text preserving whitespace and special characters
-	words := strings.Fields(text)
-	if len(words) == 0 {
+	if len(text) == 0 {
 		return text
 	}
 
-	// Create a map to track which words to redact
+	// Use comprehensive token-based redaction
+	return r.redactTokens(text)
+}
+
+// redactTokens implements comprehensive token-based redaction
+func (r *redactor) redactTokens(text string) string {
+	if len(r.redactText) == 0 {
+		return text
+	}
+
 	redactedText := text
 
-	// Process each word for redaction
-	for _, word := range words {
-		if word == "" {
+	// Split text into tokens using multiple delimiters
+	tokens := r.tokenizeText(text)
+
+	// Process each token
+	for _, token := range tokens {
+		if token == "" {
 			continue
 		}
 
-		// Clean the word of special characters for matching
-		cleanWord := r.cleanWordForMatching(word)
+		// Check if this token contains any sensitive value
+		shouldRedact := r.tokenContainsSensitiveData(token)
 
-		// Check if this word should be redacted
-		if slices.Contains(r.redactText, cleanWord) {
-			// Replace the word in the original text
-			redactedText = strings.ReplaceAll(redactedText, word, r.generateRedaction(len(cleanWord)))
+		if shouldRedact {
+			// Replace the entire token in the text
+			replacement := r.generateRedaction(len(token))
+			redactedText = strings.ReplaceAll(redactedText, token, replacement)
 		}
 	}
 
 	return redactedText
+}
+
+// tokenizeText splits text into meaningful tokens using various delimiters
+func (r *redactor) tokenizeText(text string) []string {
+	var tokens []string
+
+	// First split by whitespace to get main chunks
+	fields := strings.Fields(text)
+
+	for _, field := range fields {
+		// Further split each field by common delimiters while preserving the original tokens
+		subTokens := r.splitByDelimiters(field)
+		tokens = append(tokens, subTokens...)
+	}
+
+	return tokens
+}
+
+// splitByDelimiters splits a string by various delimiters but keeps meaningful tokens together
+func (r *redactor) splitByDelimiters(s string) []string {
+	if s == "" {
+		return nil
+	}
+
+	var tokens []string
+	currentToken := ""
+
+	// Common delimiters that might separate tokens
+	delimiters := " \t\n\r,;|&"
+
+	for i, char := range s {
+		if strings.ContainsRune(delimiters, char) {
+			if currentToken != "" {
+				tokens = append(tokens, currentToken)
+				currentToken = ""
+			}
+		} else {
+			currentToken += string(char)
+		}
+
+		// If we're at the end, add the current token
+		if i == len(s)-1 && currentToken != "" {
+			tokens = append(tokens, currentToken)
+		}
+	}
+
+	// Also add the original string as a token to catch cases where
+	// sensitive data spans across what we consider delimiters
+	tokens = append(tokens, s)
+
+	return tokens
+}
+
+// tokenContainsSensitiveData checks if a token contains any sensitive data
+func (r *redactor) tokenContainsSensitiveData(token string) bool {
+	for _, valueToRedact := range r.redactText {
+		if valueToRedact == "" {
+			continue
+		}
+
+		// Check direct containment
+		if strings.Contains(token, valueToRedact) {
+			return true
+		}
+
+		// Check after cleaning the token
+		cleanToken := r.cleanWordForMatching(token)
+		if strings.Contains(cleanToken, valueToRedact) {
+			return true
+		}
+
+		// Check if the sensitive value is contained in the cleaned token
+		cleanValue := r.cleanWordForMatching(valueToRedact)
+		if cleanValue != "" && strings.Contains(cleanToken, cleanValue) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *redactor) cleanWordForMatching(word string) string {
@@ -209,7 +351,8 @@ func (r *redactor) cleanWordForMatching(word string) string {
 	cleaned := strings.TrimFunc(word, func(r rune) bool {
 		return r == ',' || r == '.' || r == ';' || r == ':' || r == '"' || r == '\'' ||
 			r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' ||
-			r == '\n' || r == '\r' || r == '\t'
+			r == '\n' || r == '\r' || r == '\t' || r == '@' || r == '/' || r == '?' ||
+			r == '&' || r == '=' || r == '#' || r == '%' || r == '+' || r == '~'
 	})
 	return cleaned
 }
@@ -224,15 +367,4 @@ func (r *redactor) generateRedaction(length int) string {
 		redactionLength = 8
 	}
 	return strings.Repeat("*", redactionLength)
-}
-
-func isTimeoutError(err error) bool {
-	if err == nil {
-		return false
-	}
-	// Check if it's a timeout error
-	if netErr, ok := err.(interface{ Timeout() bool }); ok {
-		return netErr.Timeout()
-	}
-	return false
 }
