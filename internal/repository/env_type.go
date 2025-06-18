@@ -5,7 +5,6 @@ import (
 
 	"resty.dev/v3"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/config"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/responses"
 )
 
@@ -20,14 +19,10 @@ type envTypeRepo struct {
 }
 
 func NewEnvTypeRepository() EnvTypeRepository {
-	cfg := config.New()
-	c := resty.New().
-		SetBaseURL(cfg.BackendURL).
-		SetDisableWarn(true).
-		SetAuthToken(cfg.AccessToken)
+	client := createHTTPClient()
 
 	return &envTypeRepo{
-		client: c,
+		client: client,
 	}
 }
 

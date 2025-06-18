@@ -21,13 +21,10 @@ type authRepo struct {
 
 // NewAuthRepository creates a new instance of AuthRepository
 func NewAuthRepository() AuthRepository {
-	cfg := config.New()
-	c := resty.New().
-		SetBaseURL(cfg.BackendURL).
-		SetDisableWarn(true)
+	client := createHTTPClient()
 
 	return &authRepo{
-		client: c,
+		client: client,
 	}
 }
 
