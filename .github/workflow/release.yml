@@ -29,5 +29,5 @@ jobs:
           args: release --clean
           workdir: ./
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACTIONS }}
-          BACKEND_URI: ${{ secrets.BACKEND_URI }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENVSYNC_API_URL: ${{ secrets.ENVSYNC_API_URL }}
