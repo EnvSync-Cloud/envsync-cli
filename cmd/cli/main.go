@@ -137,8 +137,29 @@ func main() {
 				Commands: []*cli.Command{
 					{
 						Name:   "list",
-						Usage:  "List all environment types.",
-						Action: actions.ListEnvTypes(),
+						Usage:  "List all environment types for a specific app.",
+						Action: actions.GetEnvTypesByApp(),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "app-id",
+								Usage:    "ID of the app to list environment types for",
+								Aliases:  []string{"a"},
+								Required: true,
+							},
+						},
+					},
+					{
+						Name:   "view",
+						Usage:  "View details of a specific environment type.",
+						Action: actions.GetEnvTypeByID(),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "id",
+								Usage:    "ID of the environment type to view",
+								Aliases:  []string{"i"},
+								Required: true,
+							},
+						},
 					},
 				},
 			},

@@ -45,9 +45,7 @@ func KeysToBatchDeleteRequest(envs []string, appID, envTypeID string) requests.B
 		Keys:      make([]string, len(envs)),
 	}
 
-	for i, env := range envs {
-		batchRequests.Keys[i] = env
-	}
+	copy(batchRequests.Keys, envs)
 
 	return batchRequests
 }

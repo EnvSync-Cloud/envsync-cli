@@ -7,12 +7,22 @@ import (
 )
 
 func AppResponseToDomain(res responses.AppResponse) domain.Application {
+	envTypes := make([]domain.EnvType, len(res.EnvTypes))
+	for i, envType := range res.EnvTypes {
+		envTypes[i] = domain.EnvType{
+			ID:   envType.ID,
+			Name: envType.Name,
+		}
+	}
+
 	return domain.Application{
 		ID:          res.ID,
 		Name:        res.Name,
 		Description: res.Description,
 		Metadata:    res.Metadata,
 		OrgID:       res.OrgID,
+		EnvTypes:    envTypes,
+		EnvCount:    res.EnvCount,
 		CreatedAt:   res.CreatedAt,
 		UpdatedAt:   res.UpdatedAt,
 	}
@@ -23,16 +33,5 @@ func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 		Name:        app.Name,
 		Description: app.Description,
 		Metadata:    app.Metadata,
-	}
-}
-
-func EnvTypeResponseToDomain(res responses.EnvTypeResponse) domain.EnvironmentType {
-	return domain.EnvironmentType{
-		ID:        res.ID,
-		OrgID:     res.OrgID,
-		AppID:     "",
-		Name:      res.Name,
-		CreatedAt: res.CreatedAt,
-		UpdatedAt: res.UpdatedAt,
 	}
 }
