@@ -237,7 +237,7 @@ func (r *redactor) processAndRedactText(text string) string {
 	return r.redactTokens(text)
 }
 
-// redactTokens implements comprehensive token-based redaction
+// redactTokens implements precise value-based redaction
 func (r *redactor) redactTokens(text string) string {
 	if len(r.redactText) == 0 {
 		return text
@@ -245,26 +245,99 @@ func (r *redactor) redactTokens(text string) string {
 
 	redactedText := text
 
-	// Split text into tokens using multiple delimiters
-	tokens := r.tokenizeText(text)
-
-	// Process each token
-	for _, token := range tokens {
-		if token == "" {
+	// Process redaction values by length - longer values first to avoid conflicts
+	for _, valueToRedact := range r.redactText {
+		if valueToRedact == "" {
 			continue
 		}
 
-		// Check if this token contains any sensitive value
-		shouldRedact := r.tokenContainsSensitiveData(token)
-
-		if shouldRedact {
-			// Replace the entire token in the text
-			replacement := r.generateRedaction(len(token))
-			redactedText = strings.ReplaceAll(redactedText, token, replacement)
+		// For longer values (8+ chars), do direct replacement
+		if len(valueToRedact) >= 8 {
+			if strings.Contains(redactedText, valueToRedact) {
+				replacement := r.generateRedaction()
+				redactedText = strings.ReplaceAll(redactedText, valueToRedact, replacement)
+			}
+		} else {
+			// For shorter values, only redact if they appear as complete words
+			// to avoid false positives in paths, variable names, etc.
+			redactedText = r.redactCompleteWords(redactedText, valueToRedact)
 		}
 	}
 
 	return redactedText
+}
+
+// redactCompleteWords only redacts values that appear as complete words
+func (r *redactor) redactCompleteWords(text, valueToRedact string) string {
+	if valueToRedact == "" {
+		return text
+	}
+
+	// Split text into words and check each one
+	words := strings.Fields(text)
+	for _, word := range words {
+		// Skip if this word appears to be part of a path or system component
+		if r.isPartOfPath(word) {
+			continue
+		}
+
+		// Clean the word for comparison (remove punctuation)
+		cleanWord := r.cleanWordForMatching(word)
+
+		// Only redact if the cleaned word exactly matches the value to redact
+		if cleanWord == valueToRedact {
+			replacement := r.generateRedaction()
+			text = strings.ReplaceAll(text, word, replacement)
+		}
+	}
+
+	return text
+}
+
+// isPartOfPath checks if a word appears to be part of a file path or variable name
+func (r *redactor) isPartOfPath(word string) bool {
+	// Don't redact if word contains path separators
+	if strings.Contains(word, "/") || strings.Contains(word, "\\") {
+		return true
+	}
+
+	// Don't redact if word appears to be a URL
+	if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") ||
+		strings.HasPrefix(word, "ftp://") || strings.HasPrefix(word, "ssh://") {
+		return true
+	}
+
+	// Don't redact if word contains variable name patterns (underscore, all caps)
+	if strings.Contains(word, "_") && strings.ToUpper(word) == word {
+		return true
+	}
+
+	// Don't redact if word contains domain-like patterns
+	if strings.Contains(word, ".") && (strings.Contains(word, ".com") ||
+		strings.Contains(word, ".org") || strings.Contains(word, ".net") ||
+		strings.Contains(word, ".io") || strings.Contains(word, ".dev")) {
+		return true
+	}
+
+	// Don't redact if word ends with common file extensions
+	fileExtensions := []string{".key", ".pem", ".json", ".yaml", ".yml", ".conf", ".cfg", ".txt", ".log"}
+	for _, ext := range fileExtensions {
+		if strings.HasSuffix(word, ext) {
+			return true
+		}
+	}
+
+	// Don't redact if word looks like an environment variable (contains equals)
+	if strings.Contains(word, "=") {
+		return true
+	}
+
+	// Don't redact if word is followed by a colon (likely a label or key)
+	if strings.HasSuffix(word, ":") {
+		return true
+	}
+
+	return false
 }
 
 // tokenizeText splits text into meaningful tokens using various delimiters
@@ -357,14 +430,6 @@ func (r *redactor) cleanWordForMatching(word string) string {
 	return cleaned
 }
 
-func (r *redactor) generateRedaction(length int) string {
-	if length <= 0 {
-		return "********"
-	}
-	// Generate redaction based on original length, but minimum 8 characters
-	redactionLength := length
-	if redactionLength < 8 {
-		redactionLength = 8
-	}
-	return strings.Repeat("*", redactionLength)
+func (r *redactor) generateRedaction() string {
+	return "[REDACTED]"
 }

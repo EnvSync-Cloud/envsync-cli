@@ -65,107 +65,107 @@ func TestProcessAndRedactText(t *testing.T) {
 		{
 			name:     "no sensitive data",
 			input:    "This is a normal string with no secrets",
-			expected: "This is a normal string with no ********",
+			expected: "This is a normal string with no secrets",
 		},
 		{
 			name:     "simple exact match",
 			input:    "The password is mySecretPassword123",
-			expected: "The password is *******************",
+			expected: "The password is [REDACTED]",
 		},
 		{
 			name:     "multiple sensitive values",
 			input:    "Use mySecretPassword123 and sk-1234567890abcdef for auth",
-			expected: "Use ******************* and ******************* for auth",
+			expected: "Use [REDACTED] and [REDACTED] for auth",
 		},
 		{
 			name:     "sensitive value in URL",
 			input:    "postgres://user:mySecretPassword123@localhost:5432/db",
-			expected: "*****************************************************",
+			expected: "postgres://user:[REDACTED]@localhost:5432/db",
 		},
 		{
 			name:     "sensitive value in JSON",
 			input:    `{"password": "mySecretPassword123", "token": "sk-1234567890abcdef"}`,
-			expected: `{"password": *********************, "token": **********************`,
+			expected: `{"password": "[REDACTED]", "token": "[REDACTED]"}`,
 		},
 		{
 			name:     "sensitive value in XML",
 			input:    `<config><secret>mySecretPassword123</secret></config>`,
-			expected: `*****************************************************`,
+			expected: `<config><secret>[REDACTED]</secret></config>`,
 		},
 		{
 			name:     "command line with sensitive data",
 			input:    "curl -H 'Authorization: Bearer sk-1234567890abcdef' https://api.com",
-			expected: "curl -H 'Authorization: Bearer ******************** https://api.com",
+			expected: "curl -H 'Authorization: Bearer [REDACTED]' https://api.com",
 		},
 		{
 			name:     "configuration string",
 			input:    "database_password=mySecretPassword123;api_key=sk-1234567890abcdef",
-			expected: "*************************************;***************************",
+			expected: "database_password=[REDACTED];api_key=[REDACTED]",
 		},
 		{
 			name:     "word containing sensitive substring",
 			input:    "The secret value is important",
-			expected: "The ******** value is important",
+			expected: "The [REDACTED] value is important",
 		},
 		{
 			name:     "environment variable export",
 			input:    "export SECRET_KEY=mySecretPassword123",
-			expected: "export ******************************",
+			expected: "export SECRET_KEY=[REDACTED]",
 		},
 		{
 			name:     "file path with sensitive data",
 			input:    "/home/user/.config/mySecretPassword123.key",
-			expected: "******************************************",
+			expected: "/home/user/.config/[REDACTED].key",
 		},
 		{
 			name:     "log entry with timestamp",
 			input:    "[2024-01-15 10:30:45] ERROR: Authentication failed with token mySecretPassword123",
-			expected: "[2024-01-15 10:30:45] ERROR: Authentication failed with token *******************",
+			expected: "[2024-01-15 10:30:45] ERROR: Authentication failed with token [REDACTED]",
 		},
 		{
 			name:     "multiple formats in one line",
 			input:    "Config: api_key=sk-1234567890abcdef, db_pass=dbPassword456, secret=mySecretPassword123",
-			expected: "Config: ***************************, *********************, **************************",
+			expected: "Config: api_key=[REDACTED], db_pass=[REDACTED], secret=[REDACTED]",
 		},
 		{
 			name:     "quoted values",
 			input:    `secret="mySecretPassword123" token='sk-1234567890abcdef'`,
-			expected: `**************************** ***************************`,
+			expected: `secret="[REDACTED]" token='[REDACTED]'`,
 		},
 		{
 			name:     "base64-like values",
 			input:    "Authorization: Bearer mySecretPassword123==",
-			expected: "Authorization: Bearer *********************",
+			expected: "Authorization: Bearer [REDACTED]==",
 		},
 		{
 			name:     "connection string",
 			input:    "Server=localhost;Database=mydb;User=admin;Password=dbPassword456;",
-			expected: "Server=localhost;Database=mydb;User=admin;**********************;",
+			expected: "Server=localhost;Database=mydb;User=admin;Password=[REDACTED];",
 		},
 		{
 			name:     "docker command",
 			input:    "docker run -e DATABASE_URL=postgres://user:mySecretPassword123@db:5432/app myapp",
-			expected: "docker run -e ************************************************************ myapp",
+			expected: "docker run -e DATABASE_URL=postgres://user:[REDACTED]@db:5432/app myapp",
 		},
 		{
 			name:     "FTP URL",
 			input:    "ftp://mySecretPassword123:dbPassword456@ftp.example.com/files",
-			expected: "*************************************************************",
+			expected: "ftp://[REDACTED]:[REDACTED]@ftp.example.com/files",
 		},
 		{
 			name:     "JWT-like token",
 			input:    "jwt_token: eyJhbGciOiJIUzI1NiJ9.mySecretPassword123.signature",
-			expected: "jwt_token: **************************************************",
+			expected: "jwt_token: eyJhbGciOiJIUzI1NiJ9.[REDACTED].signature",
 		},
 		{
 			name:     "INI config format",
 			input:    "[database]\npassword = dbPassword456\n[api]\nkey = mySecretPassword123",
-			expected: "[database]\npassword = *************\n[api]\nkey = *******************",
+			expected: "[database]\npassword = [REDACTED]\n[api]\nkey = [REDACTED]",
 		},
 		{
 			name:     "long line with multiple secrets",
 			input:    "This is a very long configuration line that contains database_password=dbPassword456 and api_key=mySecretPassword123 and auth_token=sk-1234567890abcdef along with other settings.",
-			expected: "This is a very long configuration line that contains ******************************* and *************************** and ****************************** along with other settings.",
+			expected: "This is a very long configuration line that contains database_password=[REDACTED] and api_key=[REDACTED] and auth_token=[REDACTED] along with other settings.",
 		},
 	}
 
@@ -397,45 +397,40 @@ func TestGenerateRedaction(t *testing.T) {
 		{
 			name:     "zero length",
 			length:   0,
-			expected: "********",
+			expected: "[REDACTED]",
 		},
 		{
 			name:     "negative length",
 			length:   -5,
-			expected: "********",
+			expected: "[REDACTED]",
 		},
 		{
 			name:     "short length",
 			length:   5,
-			expected: "********",
+			expected: "[REDACTED]",
 		},
 		{
 			name:     "normal length",
 			length:   10,
-			expected: "**********",
+			expected: "[REDACTED]",
 		},
 		{
 			name:     "long length",
 			length:   20,
-			expected: "********************",
+			expected: "[REDACTED]",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := redactor.generateRedaction(tt.length)
+			result := redactor.generateRedaction()
 			if result != tt.expected {
 				t.Errorf("Expected '%s', got '%s'", tt.expected, result)
 			}
 
-			// Verify it's all asterisks
-			if !strings.Contains(result, "*") || strings.Trim(result, "*") != "" {
-				t.Errorf("Result should only contain asterisks, got '%s'", result)
-			}
-
-			// Verify minimum length
-			if len(result) < 8 {
-				t.Errorf("Result should be at least 8 characters, got %d", len(result))
+			// Verify it's [REDACTED]
+			if result != "[REDACTED]" {
+				t.Errorf("Result should be [REDACTED], got '%s'", result)
 			}
 		})
 	}
@@ -459,27 +454,27 @@ func TestRedactorEdgeCases(t *testing.T) {
 		{
 			name:     "numbers and special chars in sensitive data",
 			input:    "The secret is SECRET123 here",
-			expected: "The secret is ********* here",
+			expected: "The secret is [REDACTED] here",
 		},
 		{
 			name:     "underscores in sensitive data",
 			input:    "Token: token_value",
-			expected: "Token: ***********",
+			expected: "Token: [REDACTED]",
 		},
 		{
 			name:     "very long line",
 			input:    strings.Repeat("normal ", 100) + "sensitive" + strings.Repeat(" text", 100),
-			expected: strings.Repeat("normal ", 100) + "*********" + strings.Repeat(" text", 100),
+			expected: strings.Repeat("normal ", 100) + "[REDACTED]" + strings.Repeat(" text", 100),
 		},
 		{
 			name:     "multiple occurrences",
 			input:    "sensitive data and more sensitive information",
-			expected: "********* data and more ********* information",
+			expected: "[REDACTED] data and more [REDACTED] information",
 		},
 		{
 			name:     "unicode characters",
 			input:    "héllo wørld sensitive data 测试",
-			expected: "héllo wørld ********* data 测试",
+			expected: "héllo wørld [REDACTED] data 测试",
 		},
 	}
 
@@ -512,7 +507,7 @@ func TestRedactorPerformance(t *testing.T) {
 	}
 
 	// Verify it contains the redaction
-	if !strings.Contains(result, "*********") {
+	if !strings.Contains(result, "[REDACTED]") {
 		t.Error("Redaction not found in result")
 	}
 }
@@ -534,7 +529,7 @@ func TestRedactorWithEmptyValues(t *testing.T) {
 			name:       "redact list with empty strings",
 			redactText: []string{"", "secret", ""},
 			input:      "This contains secret data",
-			expected:   "This contains ******** data",
+			expected:   "This contains [REDACTED] data",
 		},
 		{
 			name:       "only empty strings in redact list",
@@ -644,7 +639,7 @@ spec:
 				if strings.Contains(result, "sk-1234567890abcdef") {
 					t.Error("Kubernetes YAML should not contain original API key")
 				}
-				if !strings.Contains(result, "*") {
+				if !strings.Contains(result, "[REDACTED]") {
 					t.Error("Kubernetes YAML should contain redacted values")
 				}
 			},
@@ -826,8 +821,8 @@ func TestRedactorSpecialCharacterHandling(t *testing.T) {
 				}
 			}
 
-			// Ensure redaction occurred (should contain asterisks)
-			if !strings.Contains(result, "*") {
+			// Ensure redaction occurred (should contain [REDACTED])
+			if !strings.Contains(result, "[REDACTED]") {
 				t.Errorf("Result should contain redacted values. Result: %s", result)
 			}
 		})
