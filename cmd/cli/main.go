@@ -168,6 +168,22 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "config",
+				Usage: "Manage configuration settings.",
+				Commands: []*cli.Command{
+					{
+						Name:   "set",
+						Usage:  "Set a configuration value.",
+						Action: actions.SetConfigAction(),
+					},
+					{
+						Name:   "get",
+						Usage:  "Get a configuration value.",
+						Action: actions.GetConfigAction(),
+					},
+				},
+			},
 		},
 	}
 
