@@ -98,6 +98,7 @@ func (s *syncRepo) BatchUpdateEnv(env requests.BatchSyncEnvRequest) error {
 func (s *syncRepo) BatchDeleteEnv(env requests.BatchDeleteRequest) error {
 	res, err := s.client.
 		R().
+		SetAllowMethodDeletePayload(true).
 		SetBody(env).
 		Delete("/env/batch")
 
