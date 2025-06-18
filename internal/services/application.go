@@ -11,6 +11,7 @@ type ApplicationService interface {
 	GetAppByID(id string) (domain.Application, error)
 	GetAllApps() ([]domain.Application, error)
 	DeleteApp(app domain.Application) error
+	ReadAppEnvTypes() ([]domain.EnvironmentType, error)
 }
 
 type app struct {
@@ -71,4 +72,18 @@ func (a *app) GetAppByID(id string) (domain.Application, error) {
 
 	app := mappers.AppResponseToDomain(res)
 	return app, nil
+}
+
+func (a *app) ReadAppEnvTypes() ([]domain.EnvironmentType, error) {
+	res, err := a.envTypeRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var envTypes []domain.EnvironmentType
+	for _, envTypeResp := range res {
+		envTypes = append(envTypes, mappers.EnvTypeResponseToDomain(envTypeResp))
+	}
+
+	return envTypes, nil
 }

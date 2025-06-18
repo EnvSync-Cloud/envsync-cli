@@ -25,3 +25,14 @@ func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 		Metadata:    app.Metadata,
 	}
 }
+
+func EnvTypeResponseToDomain(res responses.EnvTypeResponse) domain.EnvironmentType {
+	return domain.EnvironmentType{
+		ID:        res.ID,
+		OrgID:     res.OrgID,
+		AppID:     "",
+		Name:      res.Name,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+	}
+}

@@ -26,6 +26,7 @@ tmp/
 .env
 *.log
 .DS_Store
+dist
 
 # Project build
 bin/
