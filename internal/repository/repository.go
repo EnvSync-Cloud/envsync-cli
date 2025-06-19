@@ -13,6 +13,7 @@ func createHTTPClient() *resty.Client {
 	// Initialize variables for authentication token and application configuration
 	var authToken string
 	var cfg config.AppConfig
+	var cliCmd string
 
 	// Check if API key is provided as an environment variable
 	apiKey, ok := os.LookupEnv("API_KEY")
@@ -26,11 +27,17 @@ func createHTTPClient() *resty.Client {
 		authToken = apiKey
 	}
 
+	// get the args passed to the CLI
+	if len(os.Args) > 1 {
+		cliCmd = os.Args[1]
+	}
+
 	// Create and configure a new REST client
 	client := resty.New().
 		SetDisableWarn(true).
 		SetBaseURL(cfg.BackendURL).
 		SetHeader("Content-Type", "application/json").
+		SetHeader("X-CLI-CMD", cliCmd).
 		SetAuthToken(authToken)
 
 	return client
