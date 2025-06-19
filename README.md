@@ -38,7 +38,8 @@ sudo mv envsync /usr/local/bin/
 ```bash
 git clone https://github.com/EnvSync-Cloud/envsync-cli.git
 cd envsync-cli
-go build -o bin/envsync cmd/cli/main.go
+make build
+sudo mv bin/envsync /usr/local/bin/
 ```
 
 ### Verify Installation
@@ -224,30 +225,13 @@ cd envsync-cli
 ```
 
 ```bash
-go mod download
-```
-
-```bash
-go build -o bin/envsync cmd/cli/main.go
+make watch
 ```
 
 ### Run Development Version
 
 ```bash
-go run cmd/cli/main.go --help
-```
-
-### Build for Multiple Platforms
-
-```bash
-# Linux
-GOOS=linux GOARCH=amd64 go build -o bin/envsync-linux-amd64 cmd/cli/main.go
-
-# macOS
-GOOS=darwin GOARCH=amd64 go build -o bin/envsync-darwin-amd64 cmd/cli/main.go
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o bin/envsync-windows-amd64.exe cmd/cli/main.go
+./bin/envsync --help
 ```
 
 ## 🌟 EnvSync Ecosystem
