@@ -35,10 +35,12 @@ func main() {
 			return c, nil
 		},
 		After: func(ctx context.Context, cmd *cli.Command) error {
-			l, _ := ctx.Value(constants.LoggerKey).(*zap.Logger)
-			l.Sync()
+			if l, ok := ctx.Value(constants.LoggerKey).(*zap.Logger); ok && l != nil {
+				l.Sync()
+			}
 			return nil
 		},
+
 		Commands: []*cli.Command{
 			{
 				Name:     "login",

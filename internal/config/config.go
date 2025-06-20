@@ -41,11 +41,14 @@ func New() AppConfig {
 		}
 
 		cfg, err = ReadConfigFile()
+
 		if err != nil {
 			panic(err)
 		}
 
-		cfg.BackendURL = backendURL
+		if cfg.BackendURL == "" {
+			cfg.BackendURL = backendURL
+		}
 	})
 
 	return cfg
