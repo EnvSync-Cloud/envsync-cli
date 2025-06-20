@@ -11,21 +11,14 @@ import (
 // and configuration for API requests.
 func createHTTPClient() *resty.Client {
 	// Initialize variables for authentication token and application configuration
-	var authToken string
 	var cfg config.AppConfig
 	var cliCmd string
 
 	// Check if API key is provided as an environment variable
-	apiKey, ok := os.LookupEnv("API_KEY")
-	if !ok || apiKey == "" {
-		// If API_KEY environment variable is not set or empty,
-		// load configuration from default config and use the access token
-		cfg = config.New()
-		authToken = cfg.AccessToken
-	} else {
-		// Otherwise use the API key from environment variable
-		authToken = apiKey
-	}
+	apiKey, hasAPIKey := os.LookupEnv("API_KEY")
+
+	// Always load config to get BackendURL and potentially AccessToken
+	cfg = config.New()
 
 	// get the args passed to the CLI
 	if len(os.Args) > 1 {
@@ -37,8 +30,16 @@ func createHTTPClient() *resty.Client {
 		SetDisableWarn(true).
 		SetBaseURL(cfg.BackendURL).
 		SetHeader("Content-Type", "application/json").
-		SetHeader("X-CLI-CMD", cliCmd).
-		SetAuthToken(authToken)
+		SetHeader("X-CLI-CMD", cliCmd)
+
+	// Set authentication headers based on available credentials
+	if hasAPIKey && apiKey != "" {
+		// Priority 1: Use API key from environment variable
+		client.SetHeader("X-API-Key", apiKey)
+	} else if cfg.AccessToken != "" {
+		// Priority 2: Use JWT token from config as Bearer token
+		client.SetHeader("Authorization", "Bearer "+cfg.AccessToken)
+	}
 
 	return client
 }
