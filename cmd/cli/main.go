@@ -166,6 +166,11 @@ func main() {
 							},
 						},
 					},
+					{
+						Name:   "switch",
+						Usage:  "Switch to a different environment type for the current app.",
+						Action: actions.SwitchEnvType(),
+					},
 				},
 			},
 			{

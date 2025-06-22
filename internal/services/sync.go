@@ -15,6 +15,7 @@ import (
 
 type SyncService interface {
 	ReadConfigData() (domain.SyncConfig, error)
+	WriteConfigData(cfg domain.SyncConfig) error
 	SyncConfigExist() error
 	ReadLocalEnv() (map[string]string, error)
 	ReadRemoteEnv() ([]*domain.EnvironmentVariable, error)
@@ -55,6 +56,28 @@ func (s *sync) ReadConfigData() (domain.SyncConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+func (s *sync) WriteConfigData(cfg domain.SyncConfig) error {
+	if _, err := os.Stat(constants.DefaultProjectConfig); err != nil {
+		if os.IsNotExist(err) {
+			os.Create(constants.DefaultProjectConfig)
+		}
+	}
+
+	// Write the config to the file
+	file, err := os.Create(constants.DefaultProjectConfig)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	err = toml.NewEncoder(file).Encode(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *sync) ReadRemoteEnv() ([]*domain.EnvironmentVariable, error) {
