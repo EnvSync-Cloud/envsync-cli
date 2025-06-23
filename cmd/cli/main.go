@@ -223,6 +223,25 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "keys",
+				Usage: "Manage Keypairs.",
+				Commands: []*cli.Command{
+					{
+						Name:   "generate",
+						Usage:  "Generate a new keypair.",
+						Action: actions.GenerateKeyPairs(),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "outDir",
+								Usage:    "Directory to save the generated keypair",
+								Aliases:  []string{"o"},
+								Required: true,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
