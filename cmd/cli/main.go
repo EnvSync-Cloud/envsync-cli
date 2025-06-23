@@ -191,6 +191,38 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "users",
+				Usage: "Manage users.",
+				Commands: []*cli.Command{
+					{
+						Name:   "list",
+						Usage:  "List all active users.",
+						Action: actions.ListUsers(),
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "json",
+								Usage:   "Output users in JSON format",
+								Aliases: []string{"j"},
+								Value:   false,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:   "roles",
+				Usage:  "Manage roles.",
+				Action: actions.ListRoles(),
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "json",
+						Usage:   "Output roles in JSON format",
+						Aliases: []string{"j"},
+						Value:   false,
+					},
+				},
+			},
 		},
 	}
 
