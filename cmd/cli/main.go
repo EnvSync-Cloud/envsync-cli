@@ -5,196 +5,131 @@ import (
 	"log"
 	"os"
 
-	"github.com/urfave/cli/v3"
-	"go.uber.org/zap"
-
-	"github.com/EnvSync-Cloud/envsync-cli/internal/actions"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/logger"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/commands"
+	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/app"
+	authHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/auth"
+	configHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/config"
+	appUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/app"
+	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
+	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/cli/formatters"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/factory"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 func main() {
-	app := &cli.Command{
-		Name:                  "envsync",
-		Usage:                 "sync environment variables between local and remote environments",
-		Action:                actions.IndexAction(),
-		Suggest:               true,
-		EnableShellCompletion: true,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:        "json",
-				Usage:       "Output in JSON format",
-				Aliases:     []string{"j"},
-				Value:       false,
-				DefaultText: "false",
-			},
-		},
-		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			l := logger.NewLogger()
-			c := context.WithValue(ctx, constants.LoggerKey, l)
-			return c, nil
-		},
-		After: func(ctx context.Context, cmd *cli.Command) error {
-			if l, ok := ctx.Value(constants.LoggerKey).(*zap.Logger); ok && l != nil {
-				l.Sync()
-			}
-			return nil
-		},
+	// Initialize dependencies
+	container := buildDependencyContainer()
 
-		Commands: []*cli.Command{
-			{
-				Name:     "login",
-				Usage:    "Login to Envsync Cloud",
-				Action:   actions.LoginAction(),
-				Category: "AUTH",
-			},
-			{
-				Name:     "whoami",
-				Usage:    "Display current user information",
-				Action:   actions.Whoami(),
-				Category: "AUTH",
-			},
-			{
-				Name:     "logout",
-				Usage:    "Logout from Envsync Cloud",
-				Action:   actions.Logout(),
-				Category: "AUTH",
-			},
-			{
-				Name:   "init",
-				Usage:  "Generate a new configuration file",
-				Action: actions.InitAction(),
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "app",
-						Usage:    "Name of your app",
-						Aliases:  []string{"a"},
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "env-type",
-						Usage:    "Type of your environment",
-						Aliases:  []string{"e"},
-						Required: true,
-					},
-				},
-			},
-			{
-				Name:     "push",
-				Usage:    "Push environment variables to remote environment",
-				Action:   actions.PushAction(),
-				Category: "SYNC",
-			},
-			{
-				Name:     "pull",
-				Usage:    "Pull environment variables from remote environment",
-				Action:   actions.PullAction(),
-				Category: "SYNC",
-			},
-			{
-				Name:  "run",
-				Usage: "Run with project command",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "command",
-						Usage:    "Execute the command along with envsync",
-						Aliases:  []string{"c"},
-						Required: true,
-					},
-					&cli.StringSliceFlag{
-						Name:    "redact",
-						Usage:   "Values to redact from output (for testing)",
-						Aliases: []string{"r"},
-					},
-				},
-				Action: actions.RunAction(),
-			},
-			{
-				Name:  "app",
-				Usage: "Interact with your apps.",
-				Commands: []*cli.Command{
-					{
-						Name:   "create",
-						Usage:  "Create a new app.",
-						Action: actions.CreateApplication(),
-					},
-					{
-						Name:   "delete",
-						Usage:  "Delete an app.",
-						Action: actions.DeleteApplication(),
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "id",
-								Usage:    "ID of the app to delete",
-								Aliases:  []string{"i"},
-								Required: true,
-							},
-						},
-					},
-					{
-						Name:   "list",
-						Usage:  "List all apps.",
-						Action: actions.ListApplications(),
-					},
-				},
-			},
-			{
-				Name:  "env-type",
-				Usage: "Manage environment types.",
-				Commands: []*cli.Command{
-					{
-						Name:   "list",
-						Usage:  "List all environment types for a specific app.",
-						Action: actions.GetEnvTypesByApp(),
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "app-id",
-								Usage:    "ID of the app to list environment types for",
-								Aliases:  []string{"a"},
-								Required: true,
-							},
-						},
-					},
-					{
-						Name:   "view",
-						Usage:  "View details of a specific environment type.",
-						Action: actions.GetEnvTypeByID(),
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "id",
-								Usage:    "ID of the environment type to view",
-								Aliases:  []string{"i"},
-								Required: true,
-							},
-						},
-					},
-					{
-						Name:   "switch",
-						Usage:  "Switch to a different environment type for the current app.",
-						Action: actions.SwitchEnvType(),
-					},
-				},
-			},
-			{
-				Name:  "config",
-				Usage: "Manage configuration settings.",
-				Commands: []*cli.Command{
-					{
-						Name:   "set",
-						Usage:  "Set a configuration value.",
-						Action: actions.SetConfigAction(),
-					},
-					{
-						Name:   "get",
-						Usage:  "Get a configuration value.",
-						Action: actions.GetConfigAction(),
-					},
-				},
-			},
-		},
-	}
+	// Build command registry with dependencies
+	registry := commands.NewCommandRegistry(
+		container.AppHandler,
+		container.AuthHandler,
+		container.ConfigHandler,
+	)
 
+	// Build CLI app
+	app := registry.RegisterCLI()
+
+	// Run the application
 	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Container holds all dependencies
+type Container struct {
+	// Services
+	AppService  services.ApplicationService
+	AuthService services.AuthService
+
+	// Use Cases
+	CreateAppUseCase      appUseCases.CreateAppUseCase
+	DeleteAppUseCase      appUseCases.DeleteAppUseCase
+	ListAppsUseCase       appUseCases.ListAppsUseCase
+	GetAppUseCase         appUseCases.GetAppUseCase
+	LoginUseCase          authUseCases.LoginUseCase
+	LogoutUseCase         authUseCases.LogoutUseCase
+	WhoamiUseCase         authUseCases.WhoamiUseCase
+	SetConfigUseCase      configUseCases.SetConfigUseCase
+	GetConfigUseCase      configUseCases.GetConfigUseCase
+	ValidateConfigUseCase configUseCases.ValidateConfigUseCase
+	ResetConfigUseCase    configUseCases.ResetConfigUseCase
+
+	// Formatters
+	AppFormatter    *formatters.AppFormatter
+	AuthFormatter   *formatters.AuthFormatter
+	ConfigFormatter *formatters.ConfigFormatter
+
+	// TUI Factories
+	AppFactory *factory.AppFactory
+
+	// Handlers
+	AppHandler    *appHandler.Handler
+	AuthHandler   *authHandler.Handler
+	ConfigHandler *configHandler.Handler
+}
+
+// buildDependencyContainer creates and wires all dependencies
+func buildDependencyContainer() *Container {
+	c := &Container{}
+
+	// Initialize services
+	c.AppService = services.NewAppService()
+	c.AuthService = services.NewAuthService()
+
+	// Initialize formatters
+	c.AppFormatter = formatters.NewAppFormatter()
+	c.AuthFormatter = formatters.NewAuthFormatter()
+	c.ConfigFormatter = formatters.NewConfigFormatter()
+
+	// Initialize use cases
+	c.CreateAppUseCase = appUseCases.NewCreateAppUseCase(c.AppService)
+	c.DeleteAppUseCase = appUseCases.NewDeleteAppUseCase(c.AppService)
+	c.ListAppsUseCase = appUseCases.NewListAppsUseCase(c.AppService)
+	c.GetAppUseCase = appUseCases.NewGetAppUseCase(c.AppService)
+
+	c.LoginUseCase = authUseCases.NewLoginUseCase(c.AuthService)
+	c.LogoutUseCase = authUseCases.NewLogoutUseCase(c.AuthService)
+	c.WhoamiUseCase = authUseCases.NewWhoamiUseCase(c.AuthService)
+
+	c.SetConfigUseCase = configUseCases.NewSetConfigUseCase()
+	c.GetConfigUseCase = configUseCases.NewGetConfigUseCase()
+	c.ValidateConfigUseCase = configUseCases.NewValidateConfigUseCase()
+	c.ResetConfigUseCase = configUseCases.NewResetConfigUseCase()
+
+	// Initialize TUI factories
+	c.AppFactory = factory.NewAppFactory(
+		c.CreateAppUseCase,
+		c.DeleteAppUseCase,
+		c.ListAppsUseCase,
+		c.GetAppUseCase,
+	)
+
+	// Initialize handlers
+	c.AppHandler = appHandler.NewHandler(
+		c.CreateAppUseCase,
+		c.DeleteAppUseCase,
+		c.ListAppsUseCase,
+		c.GetAppUseCase,
+		c.AppFormatter,
+		c.AppFactory,
+	)
+
+	c.AuthHandler = authHandler.NewHandler(
+		c.LoginUseCase,
+		c.LogoutUseCase,
+		c.WhoamiUseCase,
+		c.AuthFormatter,
+	)
+
+	c.ConfigHandler = configHandler.NewHandler(
+		c.SetConfigUseCase,
+		c.GetConfigUseCase,
+		c.ValidateConfigUseCase,
+		c.ResetConfigUseCase,
+		c.ConfigFormatter,
+	)
+
+	return c
 }
