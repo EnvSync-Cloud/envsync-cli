@@ -2,6 +2,7 @@ package factory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,34 +10,17 @@ import (
 	"github.com/charmbracelet/huh"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/app"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/models/app_model"
 )
 
-type AppFactory struct {
-	createUseCase app.CreateAppUseCase
-	deleteUseCase app.DeleteAppUseCase
-	listUseCase   app.ListAppsUseCase
-	getUseCase    app.GetAppUseCase
+type AppFactory struct{}
+
+func NewAppFactory() *AppFactory {
+	return &AppFactory{}
 }
 
-func NewAppFactory(
-	createUseCase app.CreateAppUseCase,
-	deleteUseCase app.DeleteAppUseCase,
-	listUseCase app.ListAppsUseCase,
-	getUseCase app.GetAppUseCase,
-) *AppFactory {
-	return &AppFactory{
-		createUseCase: createUseCase,
-		deleteUseCase: deleteUseCase,
-		listUseCase:   listUseCase,
-		getUseCase:    getUseCase,
-	}
-}
-
-// CreateAppInteractive runs the interactive app creation flow
-func (f *AppFactory) CreateAppInteractive(ctx context.Context) error {
-	var name, description string
+// CreateAppTUI runs the interactive app creation flow
+func (f *AppFactory) CreateAppTUI(ctx context.Context, app *domain.Application) (*domain.Application, error) {
 	var confirm bool
 
 	form := huh.NewForm(
@@ -45,7 +29,7 @@ func (f *AppFactory) CreateAppInteractive(ctx context.Context) error {
 				Title("Application Name").
 				Description("Enter a unique name for your application").
 				Placeholder("my-awesome-app").
-				Value(&name).
+				Value(&app.Name).
 				Validate(func(str string) error {
 					if strings.TrimSpace(str) == "" {
 						return fmt.Errorf("application name is required")
@@ -60,7 +44,7 @@ func (f *AppFactory) CreateAppInteractive(ctx context.Context) error {
 				Title("Description").
 				Description("Provide a description for your application").
 				Placeholder("A brief description of what this application does...").
-				Value(&description).
+				Value(&app.Description).
 				Lines(3).
 				Validate(func(str string) error {
 					if strings.TrimSpace(str) == "" {
@@ -81,114 +65,38 @@ func (f *AppFactory) CreateAppInteractive(ctx context.Context) error {
 
 	err := form.Run()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !confirm {
-		return fmt.Errorf("application creation cancelled by user")
+		return nil, errors.New("application creation cancelled by user")
 	}
 
-	// Create the application
-	req := app.CreateAppRequest{
-		Name:        strings.TrimSpace(name),
-		Description: strings.TrimSpace(description),
-		Metadata:    make(map[string]any),
-	}
-
-	result, err := f.createUseCase.Execute(ctx, req)
-	if err != nil {
-		return fmt.Errorf("failed to create application: %w", err)
-	}
-
-	// Show success confirmation with huh
-	f.showSuccessConfirmation(result)
-
-	return nil
+	return app, nil
 }
 
-// showSuccessConfirmation displays a success message and confirmation
-func (f *AppFactory) showSuccessConfirmation(result *domain.Application) {
-	successMsg := fmt.Sprintf("✅ Application '%s' created successfully!\n\n", result.Name)
-	successMsg += fmt.Sprintf("📛 Name: %s\n", result.Name)
-	successMsg += fmt.Sprintf("🆔 ID: %s\n", result.ID)
-	if result.Description != "" {
-		successMsg += fmt.Sprintf("📝 Description: %s\n", result.Description)
-	}
-}
+// DeleteAppTUI runs the interactive app deletion flow using Bubble Tea
+func (f *AppFactory) DeleteAppsTUI(apps []domain.Application) ([]domain.Application, error) {
+	m := app_model.NewDeleteAppModel(apps)
 
-// DeleteAppInteractive runs the interactive app deletion flow using Bubble Tea
-func (f *AppFactory) DeleteAppInteractive(ctx context.Context) error {
-	// Get list of apps first
-	apps, err := f.listUseCase.Execute(ctx, app.ListAppsRequest{})
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
+	model, err := p.Run()
 	if err != nil {
-		return fmt.Errorf("failed to load applications: %w", err)
+		return nil, fmt.Errorf("error running delete app TUI: %w", err)
 	}
 
-	if len(apps) == 0 {
-		return f.showNoAppsMessage("delete")
+	if deleteModel, ok := model.(*app_model.DeleteAppModel); ok {
+		return deleteModel.GetSelectedApps(), nil
 	}
 
-	// Create the delete model
-	model := app_model.NewDeleteAppModel(apps, f.deleteUseCase, ctx)
-
-	// Run the program
-	program := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-
-	finalModel, err := program.Run()
-	if err != nil {
-		return err
-	}
-
-	// Check if deletion was successful
-	if m, ok := finalModel.(*app_model.DeleteAppModel); ok {
-		if m.GetError() != nil {
-			return m.GetError()
-		}
-		if m.IsDeletionComplete() {
-			fmt.Printf("✅ Successfully deleted %d application(s).\n", len(m.GetDeletedApps()))
-		}
-	}
-
-	return nil
-}
-
-// // showNoAppsMessage displays a message when no apps are found
-func (f *AppFactory) showNoAppsMessage(action string) error {
-	var confirmed bool
-
-	message := fmt.Sprintf("📭 No applications found.\n\nYou need to create an application first before you can %s one.", action)
-
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewConfirm().
-				Title("No Applications").
-				Description(message).
-				Affirmative("Create App").
-				Negative("Exit").
-				Value(&confirmed),
-		),
-	).WithTheme(huh.ThemeCharm())
-
-	err := form.Run()
-	if err != nil {
-		return err
-	}
-
-	if confirmed {
-		return f.CreateAppInteractive(context.Background())
-	}
-
-	return nil
+	return nil, fmt.Errorf("unexpected model type: %T", model)
 }
 
 // ListAppsInteractive runs the interactive app listing flow
-func (f *AppFactory) ListAppsInteractive(ctx context.Context) error {
-	// Create the list model with loading capability
-	model := app_model.NewListAppModel(ctx, f.listUseCase)
+func (f *AppFactory) ListAppsInteractive(apps []domain.Application) error {
+	// // Create the list model with loading capability
+	model := app_model.NewListAppModelWithApps(apps)
 
 	// Run the program
 	program := tea.NewProgram(
@@ -198,54 +106,9 @@ func (f *AppFactory) ListAppsInteractive(ctx context.Context) error {
 	)
 
 	_, err := program.Run()
-	return err
-}
-
-// SelectAppInteractive runs the interactive app selection flow
-func (f *AppFactory) SelectAppInteractive(ctx context.Context) error {
-	// Create the list model with loading capability for selection
-	model := app_model.NewListAppModel(ctx, f.listUseCase)
-
-	// Run the program
-	program := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-
-	finalModel, err := program.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("error running app list TUI: %w", err)
 	}
 
-	// Check if a selection was made
-	if listModel, ok := finalModel.(*app_model.ListAppModel); ok {
-		selectedApp := listModel.GetSelectedApp()
-		if selectedApp != nil {
-			fmt.Printf("Selected application: %s (ID: %s)\n", selectedApp.Name, selectedApp.ID)
-			return nil
-		}
-	}
-
-	fmt.Println("No application selected")
 	return nil
-}
-
-// Helper method for simple app listing (placeholder until full TUI is implemented)
-func (f *AppFactory) runSimpleAppList(apps []domain.Application) error {
-	// This method is now deprecated in favor of the new models
-	// Keeping for backward compatibility
-	return fmt.Errorf("runSimpleAppList is deprecated, use ListAppsInteractive instead")
-}
-
-// RunProgram is a helper to run any TUI program
-func (f *AppFactory) RunProgram(model tea.Model) error {
-	program := tea.NewProgram(
-		model,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-
-	_, err := program.Run()
-	return err
 }

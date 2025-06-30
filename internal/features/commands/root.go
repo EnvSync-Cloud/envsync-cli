@@ -16,6 +16,14 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/logger"
 )
 
+// ExecutionMode represents how the command should be executed
+type ExecutionMode int
+
+const (
+	ExecutionModeJSON ExecutionMode = iota
+	ExecutionModeCLI
+)
+
 type CommandRegistry struct {
 	appHandler    *appHandler.Handler
 	authHandler   *authHandler.Handler

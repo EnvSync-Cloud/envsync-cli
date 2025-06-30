@@ -11,8 +11,8 @@ import (
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/cli/formatters"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/style"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/style"
 )
 
 type Handler struct {

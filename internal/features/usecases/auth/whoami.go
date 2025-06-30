@@ -10,9 +10,10 @@ type whoamiUseCase struct {
 	authService services.AuthService
 }
 
-func NewWhoamiUseCase(authService services.AuthService) WhoamiUseCase {
+func NewWhoamiUseCase() WhoamiUseCase {
+	service := services.NewAuthService()
 	return &whoamiUseCase{
-		authService: authService,
+		authService: service,
 	}
 }
 

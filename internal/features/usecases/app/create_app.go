@@ -7,45 +7,53 @@ import (
 	"strings"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/factory"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
 
 type createAppUseCase struct {
 	appService services.ApplicationService
+	tui        *factory.AppFactory
 }
 
-func NewCreateAppUseCase(appService services.ApplicationService) CreateAppUseCase {
+func NewCreateAppUseCase() CreateAppUseCase {
+	service := services.NewAppService()
+	tui := factory.NewAppFactory()
 	return &createAppUseCase{
-		appService: appService,
+		appService: service,
+		tui:        tui,
 	}
 }
 
-func (uc *createAppUseCase) Execute(ctx context.Context, req CreateAppRequest) (*domain.Application, error) {
-	// Validate request
-	if err := req.Validate(); err != nil {
-		return nil, NewValidationError("invalid create app request", err)
+func (uc *createAppUseCase) Execute(ctx context.Context, app domain.Application) (*domain.Application, error) {
+	if app.Name != "" {
+		// Check if application with same name already exists
+		if exists, err := uc.checkApplicationExists(app.Name); err != nil {
+			return nil, NewServiceError("failed to check application existence", err)
+		} else if exists {
+			return nil, NewAlreadyExistsError(
+				fmt.Sprintf("application with name '%s' already exists", app.Name),
+				ErrAppAlreadyExists,
+			)
+		}
 	}
 
-	// Additional business validation
-	if err := uc.validateBusinessRules(req); err != nil {
+	// var inputApp *domain.Application
+	if app.Name == "" {
+		a, err := uc.tui.CreateAppTUI(ctx, &app)
+		if err != nil {
+			return nil, NewServiceError("failed to create application via TUI", err)
+		}
+		app = *a
+	}
+
+	// Validate business validation
+	if err := uc.validateBusinessRules(app); err != nil {
 		return nil, err
 	}
 
-	// Create domain object
-	app := domain.NewApplication(req.Name, req.Description, req.Metadata)
-
-	// Check if application with same name already exists
-	if exists, err := uc.checkApplicationExists(req.Name); err != nil {
-		return nil, NewServiceError("failed to check application existence", err)
-	} else if exists {
-		return nil, NewAlreadyExistsError(
-			fmt.Sprintf("application with name '%s' already exists", req.Name),
-			ErrAppAlreadyExists,
-		)
-	}
-
 	// Create application via service
-	createdApp, err := uc.appService.CreateApp(app)
+	createdApp, err := uc.appService.CreateApp(&app)
 	if err != nil {
 		return nil, NewServiceError("failed to create application", err)
 	}
@@ -53,24 +61,29 @@ func (uc *createAppUseCase) Execute(ctx context.Context, req CreateAppRequest) (
 	return &createdApp, nil
 }
 
-func (uc *createAppUseCase) validateBusinessRules(req CreateAppRequest) error {
+func (uc *createAppUseCase) validateBusinessRules(app domain.Application) error {
 	// Validate name length
-	if len(req.Name) > 100 {
+	if len(app.Name) > 100 {
 		return NewValidationError("application name too long", ErrAppNameTooLong)
 	}
 
+	// Validate name is not empty
+	if strings.TrimSpace(app.Name) == "" {
+		return NewValidationError("application name cannot be empty", ErrAppNameEmpty)
+	}
+
 	// Validate description length
-	if len(req.Description) > 500 {
+	if len(app.Description) > 1 && len(app.Description) > 500 {
 		return NewValidationError("application description too long", ErrAppDescriptionTooLong)
 	}
 
 	// Validate name format (alphanumeric, hyphens, underscores only)
-	if !uc.isValidAppName(req.Name) {
+	if !uc.isValidAppName(app.Name) {
 		return NewValidationError("invalid application name format", ErrInvalidAppName)
 	}
 
 	// Validate metadata size
-	if err := uc.validateMetadata(req.Metadata); err != nil {
+	if err := uc.validateMetadata(app.Metadata); err != nil {
 		return NewValidationError("invalid metadata", err)
 	}
 

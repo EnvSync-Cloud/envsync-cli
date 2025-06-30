@@ -7,12 +7,18 @@ import (
 	"strings"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/style"
 )
 
-type AppFormatter struct{}
+type AppFormatter struct {
+	*BaseFormatter
+}
 
 func NewAppFormatter() *AppFormatter {
-	return &AppFormatter{}
+	base := NewBaseFormatter()
+	return &AppFormatter{
+		BaseFormatter: base,
+	}
 }
 
 // FormatJSON formats applications as JSON
@@ -193,7 +199,22 @@ func (f *AppFormatter) FormatWarning(writer io.Writer, message string) error {
 
 // FormatInfo formats info messages
 func (f *AppFormatter) FormatInfo(writer io.Writer, message string) error {
-	output := fmt.Sprintf("ℹ️  %s\n", message)
+	output := fmt.Sprintf("ℹ️  %s\n", style.Dimmed(message))
 	_, err := writer.Write([]byte(output))
+	return err
+}
+
+func (f *AppFormatter) FormatCreateSuccessMessage(writer io.Writer, app domain.Application) error {
+	successMsg := fmt.Sprintf("✅ Application '%s' created successfully!\n\n", app.Name)
+	successMsg += fmt.Sprintf("📛 Name: %s\n", app.Name)
+	successMsg += fmt.Sprintf("🆔 ID: %s\n", app.ID)
+	if app.Description != "" {
+		successMsg += fmt.Sprintf("📝 Description: %s\n", app.Description)
+	}
+
+	// TODO: Print metadata
+
+	_, err := writer.Write([]byte(successMsg))
+
 	return err
 }

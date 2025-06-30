@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/cli/formatters"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
 type Handler struct {

@@ -12,9 +12,7 @@ import (
 	appUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/app"
 	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
 	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/cli/formatters"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/factory"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
 func main() {
@@ -37,98 +35,57 @@ func main() {
 	}
 }
 
-// Container holds all dependencies
+// Container holds the handler dependencies
 type Container struct {
-	// Services
-	AppService  services.ApplicationService
-	AuthService services.AuthService
-
-	// Use Cases
-	CreateAppUseCase      appUseCases.CreateAppUseCase
-	DeleteAppUseCase      appUseCases.DeleteAppUseCase
-	ListAppsUseCase       appUseCases.ListAppsUseCase
-	GetAppUseCase         appUseCases.GetAppUseCase
-	LoginUseCase          authUseCases.LoginUseCase
-	LogoutUseCase         authUseCases.LogoutUseCase
-	WhoamiUseCase         authUseCases.WhoamiUseCase
-	SetConfigUseCase      configUseCases.SetConfigUseCase
-	GetConfigUseCase      configUseCases.GetConfigUseCase
-	ValidateConfigUseCase configUseCases.ValidateConfigUseCase
-	ResetConfigUseCase    configUseCases.ResetConfigUseCase
-
-	// Formatters
-	AppFormatter    *formatters.AppFormatter
-	AuthFormatter   *formatters.AuthFormatter
-	ConfigFormatter *formatters.ConfigFormatter
-
-	// TUI Factories
-	AppFactory *factory.AppFactory
-
-	// Handlers
 	AppHandler    *appHandler.Handler
 	AuthHandler   *authHandler.Handler
 	ConfigHandler *configHandler.Handler
 }
 
-// buildDependencyContainer creates and wires all dependencies
+// buildDependencyContainer creates and wires all handler dependencies
 func buildDependencyContainer() *Container {
 	c := &Container{}
 
-	// Initialize services
-	c.AppService = services.NewAppService()
-	c.AuthService = services.NewAuthService()
-
 	// Initialize formatters
-	c.AppFormatter = formatters.NewAppFormatter()
-	c.AuthFormatter = formatters.NewAuthFormatter()
-	c.ConfigFormatter = formatters.NewConfigFormatter()
+	appFormatter := formatters.NewAppFormatter()
+	authFormatter := formatters.NewAuthFormatter()
+	configFormatter := formatters.NewConfigFormatter()
 
 	// Initialize use cases
-	c.CreateAppUseCase = appUseCases.NewCreateAppUseCase(c.AppService)
-	c.DeleteAppUseCase = appUseCases.NewDeleteAppUseCase(c.AppService)
-	c.ListAppsUseCase = appUseCases.NewListAppsUseCase(c.AppService)
-	c.GetAppUseCase = appUseCases.NewGetAppUseCase(c.AppService)
+	createAppUseCase := appUseCases.NewCreateAppUseCase()
+	deleteAppUseCase := appUseCases.NewDeleteAppUseCase()
+	listAppsUseCase := appUseCases.NewListAppsUseCase()
 
-	c.LoginUseCase = authUseCases.NewLoginUseCase(c.AuthService)
-	c.LogoutUseCase = authUseCases.NewLogoutUseCase(c.AuthService)
-	c.WhoamiUseCase = authUseCases.NewWhoamiUseCase(c.AuthService)
+	loginUseCase := authUseCases.NewLoginUseCase()
+	logoutUseCase := authUseCases.NewLogoutUseCase()
+	whoamiUseCase := authUseCases.NewWhoamiUseCase()
 
-	c.SetConfigUseCase = configUseCases.NewSetConfigUseCase()
-	c.GetConfigUseCase = configUseCases.NewGetConfigUseCase()
-	c.ValidateConfigUseCase = configUseCases.NewValidateConfigUseCase()
-	c.ResetConfigUseCase = configUseCases.NewResetConfigUseCase()
-
-	// Initialize TUI factories
-	c.AppFactory = factory.NewAppFactory(
-		c.CreateAppUseCase,
-		c.DeleteAppUseCase,
-		c.ListAppsUseCase,
-		c.GetAppUseCase,
-	)
+	setConfigUseCase := configUseCases.NewSetConfigUseCase()
+	getConfigUseCase := configUseCases.NewGetConfigUseCase()
+	validateConfigUseCase := configUseCases.NewValidateConfigUseCase()
+	resetConfigUseCase := configUseCases.NewResetConfigUseCase()
 
 	// Initialize handlers
 	c.AppHandler = appHandler.NewHandler(
-		c.CreateAppUseCase,
-		c.DeleteAppUseCase,
-		c.ListAppsUseCase,
-		c.GetAppUseCase,
-		c.AppFormatter,
-		c.AppFactory,
+		createAppUseCase,
+		deleteAppUseCase,
+		listAppsUseCase,
+		appFormatter,
 	)
 
 	c.AuthHandler = authHandler.NewHandler(
-		c.LoginUseCase,
-		c.LogoutUseCase,
-		c.WhoamiUseCase,
-		c.AuthFormatter,
+		loginUseCase,
+		logoutUseCase,
+		whoamiUseCase,
+		authFormatter,
 	)
 
 	c.ConfigHandler = configHandler.NewHandler(
-		c.SetConfigUseCase,
-		c.GetConfigUseCase,
-		c.ValidateConfigUseCase,
-		c.ResetConfigUseCase,
-		c.ConfigFormatter,
+		setConfigUseCase,
+		getConfigUseCase,
+		validateConfigUseCase,
+		resetConfigUseCase,
+		configFormatter,
 	)
 
 	return c

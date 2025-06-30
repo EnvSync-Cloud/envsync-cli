@@ -12,9 +12,10 @@ type logoutUseCase struct {
 	authService services.AuthService
 }
 
-func NewLogoutUseCase(authService services.AuthService) LogoutUseCase {
+func NewLogoutUseCase() LogoutUseCase {
+	service := services.NewAuthService()
 	return &logoutUseCase{
-		authService: authService,
+		authService: service,
 	}
 }
 

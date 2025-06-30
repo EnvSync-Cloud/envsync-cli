@@ -9,17 +9,18 @@ import (
 	"github.com/savioxavier/termlink"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/style"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/style"
 )
 
 type loginUseCase struct {
 	authService services.AuthService
 }
 
-func NewLoginUseCase(authService services.AuthService) LoginUseCase {
+func NewLoginUseCase() LoginUseCase {
+	service := services.NewAuthService()
 	return &loginUseCase{
-		authService: authService,
+		authService: service,
 	}
 }
 

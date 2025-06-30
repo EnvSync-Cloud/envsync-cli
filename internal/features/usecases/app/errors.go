@@ -18,6 +18,7 @@ var (
 	ErrAppNameTooLong        = errors.New("application name is too long (max 100 characters)")
 	ErrAppDescriptionTooLong = errors.New("application description is too long (max 500 characters)")
 	ErrInvalidAppName        = errors.New("application name contains invalid characters")
+	ErrAppNameEmpty          = errors.New("application name cannot be empty")
 
 	// Permission errors
 	ErrAppAccessDenied = errors.New("access denied to application")

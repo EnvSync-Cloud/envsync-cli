@@ -29,9 +29,20 @@ func AppResponseToDomain(res responses.AppResponse) domain.Application {
 }
 
 func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
+	var metaData map[string]any
+
+	if app.Metadata != nil {
+		metaData = make(map[string]any, len(app.Metadata))
+		for k, v := range app.Metadata {
+			metaData[k] = v
+		}
+	} else {
+		metaData = make(map[string]any, 0)
+	}
+
 	return requests.ApplicationRequest{
 		Name:        app.Name,
 		Description: app.Description,
-		Metadata:    app.Metadata,
+		Metadata:    metaData,
 	}
 }
