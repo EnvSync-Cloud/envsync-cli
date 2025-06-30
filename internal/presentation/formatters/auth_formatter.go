@@ -1,7 +1,6 @@
 package formatters
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -9,27 +8,15 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 )
 
-type AuthFormatter struct{}
-
-func NewAuthFormatter() *AuthFormatter {
-	return &AuthFormatter{}
+type AuthFormatter struct {
+	*BaseFormatter
 }
 
-// FormatJSON formats auth data as JSON
-func (f *AuthFormatter) FormatJSON(writer io.Writer, data interface{}) error {
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal auth data to JSON: %w", err)
+func NewAuthFormatter() *AuthFormatter {
+	base := NewBaseFormatter()
+	return &AuthFormatter{
+		BaseFormatter: base,
 	}
-
-	_, err = writer.Write(jsonData)
-	if err != nil {
-		return fmt.Errorf("failed to write JSON output: %w", err)
-	}
-
-	// Add newline for better formatting
-	_, err = writer.Write([]byte("\n"))
-	return err
 }
 
 // FormatUserInfo formats user information in a readable format

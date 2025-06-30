@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/browser"
 	"github.com/savioxavier/termlink"
 	"github.com/urfave/cli/v3"
 
@@ -37,11 +36,8 @@ func NewHandler(
 }
 
 func (h *Handler) Login(ctx context.Context, cmd *cli.Command) error {
-	// Create login request
-	req := auth.LoginRequest{}
-
-	// // Execute use case to get credentials
-	response, err := h.loginUseCase.Execute(ctx, req)
+	// Execute use case to get credentials
+	response, err := h.loginUseCase.Execute(ctx)
 	if err != nil {
 		return h.formatUseCaseError(cmd, err)
 	}
@@ -61,11 +57,8 @@ func (h *Handler) Login(ctx context.Context, cmd *cli.Command) error {
 }
 
 func (h *Handler) Logout(ctx context.Context, cmd *cli.Command) error {
-	// Build logout request
-	req := auth.LogoutRequest{}
-
 	// Execute use case
-	if err := h.logoutUseCase.Execute(ctx, req); err != nil {
+	if err := h.logoutUseCase.Execute(ctx); err != nil {
 		return h.formatUseCaseError(cmd, err)
 	}
 
@@ -73,11 +66,8 @@ func (h *Handler) Logout(ctx context.Context, cmd *cli.Command) error {
 }
 
 func (h *Handler) Whoami(ctx context.Context, cmd *cli.Command) error {
-	// Build whoami request
-	req := auth.WhoamiRequest{}
-
 	// Execute use case
-	response, err := h.whoamiUseCase.Execute(ctx, req)
+	response, err := h.whoamiUseCase.Execute(ctx)
 	if err != nil {
 		return h.formatUseCaseError(cmd, err)
 	}
@@ -122,9 +112,9 @@ func (h *Handler) displayLoginInstructions(cmd *cli.Command, credentials interfa
 	return nil
 }
 
-func (h *Handler) openBrowserForLogin(verificationUri string) error {
-	return browser.OpenURL(verificationUri)
-}
+// func (h *Handler) openBrowserForLogin(verificationUri string) error {
+// 	return browser.OpenURL(verificationUri)
+// }
 
 func (h *Handler) formatWhoamiResponse(cmd *cli.Command, response *auth.WhoamiResponse) error {
 	if !response.IsLoggedIn {

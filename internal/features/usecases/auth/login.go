@@ -24,7 +24,7 @@ func NewLoginUseCase() LoginUseCase {
 	}
 }
 
-func (uc *loginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
+func (uc *loginUseCase) Execute(ctx context.Context) (*LoginResponse, error) {
 	// Check if user is already logged in
 	userInfo, err := uc.checkCurrentLoginStatus()
 	if err == nil && userInfo != nil {
@@ -109,11 +109,6 @@ func (uc *loginUseCase) handlePollingError(err error) error {
 
 // displayLoginInstructions shows the user what they need to do to authenticate
 func (uc *loginUseCase) displayLoginInstructions(credentials any) error {
-	// Print as JSON if requested
-	// if cmd.Bool("json") {
-	// 	return printAsJSON(credentials)
-	// }
-
 	// Type assert to our domain model
 	creds, ok := credentials.(*domain.LoginCredentials)
 	if !ok {

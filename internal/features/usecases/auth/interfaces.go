@@ -8,17 +8,17 @@ import (
 
 // LoginUseCase defines the interface for user authentication
 type LoginUseCase interface {
-	Execute(ctx context.Context, req LoginRequest) (*LoginResponse, error)
+	Execute(ctx context.Context) (*LoginResponse, error)
 }
 
 // LogoutUseCase defines the interface for user logout
 type LogoutUseCase interface {
-	Execute(ctx context.Context, req LogoutRequest) error
+	Execute(ctx context.Context) error
 }
 
 // WhoamiUseCase defines the interface for getting current user info
 type WhoamiUseCase interface {
-	Execute(ctx context.Context, req WhoamiRequest) (*WhoamiResponse, error)
+	Execute(ctx context.Context) (*WhoamiResponse, error)
 }
 
 // Request/Response types

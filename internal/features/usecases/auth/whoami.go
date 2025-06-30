@@ -17,7 +17,7 @@ func NewWhoamiUseCase() WhoamiUseCase {
 	}
 }
 
-func (uc *whoamiUseCase) Execute(ctx context.Context, req WhoamiRequest) (*WhoamiResponse, error) {
+func (uc *whoamiUseCase) Execute(ctx context.Context) (*WhoamiResponse, error) {
 	// Initialize response with configuration info
 	response := &WhoamiResponse{
 		IsLoggedIn: false,

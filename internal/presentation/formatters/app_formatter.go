@@ -1,7 +1,6 @@
 package formatters
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -19,62 +18,6 @@ func NewAppFormatter() *AppFormatter {
 	return &AppFormatter{
 		BaseFormatter: base,
 	}
-}
-
-// FormatJSON formats applications as JSON
-func (f *AppFormatter) FormatJSON(writer io.Writer, apps []domain.Application) error {
-	data, err := json.MarshalIndent(apps, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal applications to JSON: %w", err)
-	}
-
-	_, err = writer.Write(data)
-	if err != nil {
-		return fmt.Errorf("failed to write JSON output: %w", err)
-	}
-
-	// Add newline for better formatting
-	_, err = writer.Write([]byte("\n"))
-	return err
-}
-
-// FormatTable formats applications as a readable table
-func (f *AppFormatter) FormatTable(writer io.Writer, apps []domain.Application) error {
-	if len(apps) == 0 {
-		_, err := writer.Write([]byte("📭 No applications found.\n"))
-		return err
-	}
-
-	// Header
-	header := "🚀 Available Applications:\n"
-	if _, err := writer.Write([]byte(header)); err != nil {
-		return err
-	}
-
-	// Applications
-	for i, app := range apps {
-		if i > 0 {
-			// Add separator between apps
-			separator := "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-			if _, err := writer.Write([]byte(separator)); err != nil {
-				return err
-			}
-		}
-
-		appOutput := f.formatSingleApp(app)
-		if _, err := writer.Write([]byte(appOutput)); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// FormatSingle formats a single application
-func (f *AppFormatter) FormatSingle(writer io.Writer, app domain.Application) error {
-	output := f.formatSingleApp(app)
-	_, err := writer.Write([]byte(output))
-	return err
 }
 
 // FormatList formats applications as a simple list

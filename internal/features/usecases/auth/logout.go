@@ -19,7 +19,7 @@ func NewLogoutUseCase() LogoutUseCase {
 	}
 }
 
-func (uc *logoutUseCase) Execute(ctx context.Context, req LogoutRequest) error {
+func (uc *logoutUseCase) Execute(ctx context.Context) error {
 	// Perform logout
 	if err := uc.authService.Logout(); err != nil {
 		return NewServiceError("failed to logout", err)
