@@ -14,7 +14,6 @@ func Commands(handler *config.Handler) *cli.Command {
 		Commands: []*cli.Command{
 			SetCommand(handler),
 			GetCommand(handler),
-			ValidateCommand(handler),
 			ResetCommand(handler),
 		},
 	}
@@ -62,35 +61,6 @@ Examples:
 Supported keys:
   - access_token: Authentication token for EnvSync Cloud
   - backend_url: Backend API URL`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "format",
-				Usage: "Output format (table, compact)",
-				Value: "table",
-			},
-		},
-	}
-}
-
-func ValidateCommand(handler *config.Handler) *cli.Command {
-	return &cli.Command{
-		Name:   "validate",
-		Usage:  "Validate configuration",
-		Action: handler.Validate,
-		Description: `Validate the current configuration and check for issues.
-
-This command will:
-  - Check if required configuration values are set
-  - Validate format and structure of configuration values
-  - Provide suggestions for fixing any issues found
-  - Verify connectivity to backend services (if applicable)`,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "fix",
-				Usage: "Attempt to automatically fix common issues",
-				Value: false,
-			},
-		},
 	}
 }
 

@@ -11,26 +11,23 @@ import (
 )
 
 type Handler struct {
-	setUseCase      config.SetConfigUseCase
-	getUseCase      config.GetConfigUseCase
-	validateUseCase config.ValidateConfigUseCase
-	resetUseCase    config.ResetConfigUseCase
-	formatter       *formatters.ConfigFormatter
+	setUseCase   config.SetConfigUseCase
+	getUseCase   config.GetConfigUseCase
+	resetUseCase config.ResetConfigUseCase
+	formatter    *formatters.ConfigFormatter
 }
 
 func NewHandler(
 	setUseCase config.SetConfigUseCase,
 	getUseCase config.GetConfigUseCase,
-	validateUseCase config.ValidateConfigUseCase,
 	resetUseCase config.ResetConfigUseCase,
 	formatter *formatters.ConfigFormatter,
 ) *Handler {
 	return &Handler{
-		setUseCase:      setUseCase,
-		getUseCase:      getUseCase,
-		validateUseCase: validateUseCase,
-		resetUseCase:    resetUseCase,
-		formatter:       formatter,
+		setUseCase:   setUseCase,
+		getUseCase:   getUseCase,
+		resetUseCase: resetUseCase,
+		formatter:    formatter,
 	}
 }
 
@@ -114,38 +111,7 @@ func (h *Handler) Get(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	// Show all configuration
-	format := cmd.String("format")
-	switch format {
-	case "compact":
-		return h.formatter.FormatCompact(cmd.Writer, response.Config)
-	default:
-		return h.formatter.FormatTable(cmd.Writer, response.Config)
-	}
-}
-
-func (h *Handler) Validate(ctx context.Context, cmd *cli.Command) error {
-	// Build request
-	req := config.ValidateConfigRequest{
-		Config: nil, // Validate current config file
-	}
-
-	// Execute use case
-	response, err := h.validateUseCase.Execute(ctx, req)
-	if err != nil {
-		return h.formatUseCaseError(cmd, err)
-	}
-
-	// Format validation results
-	issues := make([]string, len(response.Issues))
-	for i, issue := range response.Issues {
-		issues[i] = issue.Message
-		if issue.Suggestion != "" {
-			issues[i] += " (" + issue.Suggestion + ")"
-		}
-	}
-
-	return h.formatter.FormatValidationResult(cmd.Writer, response.IsValid, issues)
+	return nil
 }
 
 func (h *Handler) Reset(ctx context.Context, cmd *cli.Command) error {

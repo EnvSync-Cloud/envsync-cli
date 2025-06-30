@@ -117,10 +117,3 @@ func (uc *setConfigUseCase) isValidURL(url string) bool {
 
 	return false
 }
-
-func (uc *setConfigUseCase) backupConfiguration() error {
-	// In a real implementation, you might want to create a backup
-	// of the existing configuration before making changes
-	// This is a placeholder for that functionality
-	return nil
-}

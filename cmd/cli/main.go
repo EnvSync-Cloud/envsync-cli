@@ -62,7 +62,6 @@ func buildDependencyContainer() *Container {
 
 	setConfigUseCase := configUseCases.NewSetConfigUseCase()
 	getConfigUseCase := configUseCases.NewGetConfigUseCase()
-	validateConfigUseCase := configUseCases.NewValidateConfigUseCase()
 	resetConfigUseCase := configUseCases.NewResetConfigUseCase()
 
 	// Initialize handlers
@@ -83,7 +82,6 @@ func buildDependencyContainer() *Container {
 	c.ConfigHandler = configHandler.NewHandler(
 		setConfigUseCase,
 		getConfigUseCase,
-		validateConfigUseCase,
 		resetConfigUseCase,
 		configFormatter,
 	)
