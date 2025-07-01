@@ -1,13 +1,13 @@
-package config
+package commands
 
 import (
 	"github.com/urfave/cli/v3"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/config"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 )
 
-// Commands returns all config-related commands
-func Commands(handler *config.Handler) *cli.Command {
+// ConfigCommands returns all config-related commands
+func ConfigCommands(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:  "config",
 		Usage: "Manage configuration settings",
@@ -19,7 +19,7 @@ func Commands(handler *config.Handler) *cli.Command {
 	}
 }
 
-func SetCommand(handler *config.Handler) *cli.Command {
+func SetCommand(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "set",
 		Usage:     "Set configuration values",
@@ -45,7 +45,7 @@ Supported keys:
 	}
 }
 
-func GetCommand(handler *config.Handler) *cli.Command {
+func GetCommand(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "get",
 		Usage:     "Get configuration values",
@@ -64,7 +64,7 @@ Supported keys:
 	}
 }
 
-func ResetCommand(handler *config.Handler) *cli.Command {
+func ResetCommand(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "reset",
 		Usage:     "Reset configuration values",

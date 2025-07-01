@@ -1,4 +1,4 @@
-package auth
+package handlers
 
 import (
 	"context"
@@ -14,20 +14,20 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/style"
 )
 
-type Handler struct {
+type AuthHandler struct {
 	loginUseCase  auth.LoginUseCase
 	logoutUseCase auth.LogoutUseCase
 	whoamiUseCase auth.WhoamiUseCase
 	formatter     *formatters.AuthFormatter
 }
 
-func NewHandler(
+func NewAuthHandler(
 	loginUseCase auth.LoginUseCase,
 	logoutUseCase auth.LogoutUseCase,
 	whoamiUseCase auth.WhoamiUseCase,
 	formatter *formatters.AuthFormatter,
-) *Handler {
-	return &Handler{
+) *AuthHandler {
+	return &AuthHandler{
 		loginUseCase:  loginUseCase,
 		logoutUseCase: logoutUseCase,
 		whoamiUseCase: whoamiUseCase,
@@ -35,7 +35,7 @@ func NewHandler(
 	}
 }
 
-func (h *Handler) Login(ctx context.Context, cmd *cli.Command) error {
+func (h *AuthHandler) Login(ctx context.Context, cmd *cli.Command) error {
 	// Execute use case to get credentials
 	response, err := h.loginUseCase.Execute(ctx)
 	if err != nil {
@@ -56,7 +56,7 @@ func (h *Handler) Login(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func (h *Handler) Logout(ctx context.Context, cmd *cli.Command) error {
+func (h *AuthHandler) Logout(ctx context.Context, cmd *cli.Command) error {
 	// Execute use case
 	if err := h.logoutUseCase.Execute(ctx); err != nil {
 		return h.formatUseCaseError(cmd, err)
@@ -65,7 +65,7 @@ func (h *Handler) Logout(ctx context.Context, cmd *cli.Command) error {
 	return h.formatter.FormatSuccess(cmd.Writer, "Logout successful! You have been signed out.")
 }
 
-func (h *Handler) Whoami(ctx context.Context, cmd *cli.Command) error {
+func (h *AuthHandler) Whoami(ctx context.Context, cmd *cli.Command) error {
 	// Execute use case
 	response, err := h.whoamiUseCase.Execute(ctx)
 	if err != nil {
@@ -77,7 +77,7 @@ func (h *Handler) Whoami(ctx context.Context, cmd *cli.Command) error {
 
 // Helper methods
 
-func (h *Handler) displayLoginInstructions(cmd *cli.Command, credentials interface{}) error {
+func (h *AuthHandler) displayLoginInstructions(cmd *cli.Command, credentials interface{}) error {
 	// Print as JSON if requested
 	if cmd.Bool("json") {
 		return h.formatter.FormatJSON(cmd.Writer, map[string]interface{}{
@@ -112,11 +112,11 @@ func (h *Handler) displayLoginInstructions(cmd *cli.Command, credentials interfa
 	return nil
 }
 
-// func (h *Handler) openBrowserForLogin(verificationUri string) error {
+// func (h *AuthHandler) openBrowserForLogin(verificationUri string) error {
 // 	return browser.OpenURL(verificationUri)
 // }
 
-func (h *Handler) formatWhoamiResponse(cmd *cli.Command, response *auth.WhoamiResponse) error {
+func (h *AuthHandler) formatWhoamiResponse(cmd *cli.Command, response *auth.WhoamiResponse) error {
 	if !response.IsLoggedIn {
 		return h.formatter.FormatWarning(cmd.Writer, "You are not logged in. Run 'envsync auth login' to authenticate.")
 	}
@@ -133,7 +133,7 @@ func (h *Handler) formatWhoamiResponse(cmd *cli.Command, response *auth.WhoamiRe
 	return nil
 }
 
-func (h *Handler) formatUserInfo(cmd *cli.Command, userInfo interface{}) error {
+func (h *AuthHandler) formatUserInfo(cmd *cli.Command, userInfo interface{}) error {
 	// Format user info in a readable way
 	fmt.Println("\n👤 User Information:")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━")
@@ -159,7 +159,7 @@ func (h *Handler) formatUserInfo(cmd *cli.Command, userInfo interface{}) error {
 	return nil
 }
 
-func (h *Handler) formatUseCaseError(cmd *cli.Command, err error) error {
+func (h *AuthHandler) formatUseCaseError(cmd *cli.Command, err error) error {
 	// Handle different types of use case errors
 	switch e := err.(type) {
 	case *auth.AuthError:

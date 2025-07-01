@@ -6,12 +6,11 @@ import (
 	"os"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/commands"
-	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/app"
-	authHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/auth"
-	configHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/config"
+	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 	appUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/app"
 	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
 	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
+	envUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/environment"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
@@ -24,6 +23,7 @@ func main() {
 		container.AppHandler,
 		container.AuthHandler,
 		container.ConfigHandler,
+		container.EnvironmentHandler,
 	)
 
 	// Build CLI app
@@ -37,9 +37,10 @@ func main() {
 
 // Container holds the handler dependencies
 type Container struct {
-	AppHandler    *appHandler.Handler
-	AuthHandler   *authHandler.Handler
-	ConfigHandler *configHandler.Handler
+	AppHandler         *appHandler.AppHandler
+	AuthHandler        *appHandler.AuthHandler
+	ConfigHandler      *appHandler.ConfigHandler
+	EnvironmentHandler *appHandler.EnvironmentHandler
 }
 
 // buildDependencyContainer creates and wires all handler dependencies
@@ -64,26 +65,34 @@ func buildDependencyContainer() *Container {
 	getConfigUseCase := configUseCases.NewGetConfigUseCase()
 	resetConfigUseCase := configUseCases.NewResetConfigUseCase()
 
+	getEnvironmentUseCase := envUseCases.NewGetEnvUseCase()
+	switchEnvironmentUseCase := envUseCases.NewSwitchEnvUseCase()
+
 	// Initialize handlers
-	c.AppHandler = appHandler.NewHandler(
+	c.AppHandler = appHandler.NewAppHandler(
 		createAppUseCase,
 		deleteAppUseCase,
 		listAppsUseCase,
 		appFormatter,
 	)
 
-	c.AuthHandler = authHandler.NewHandler(
+	c.AuthHandler = appHandler.NewAuthHandler(
 		loginUseCase,
 		logoutUseCase,
 		whoamiUseCase,
 		authFormatter,
 	)
 
-	c.ConfigHandler = configHandler.NewHandler(
+	c.ConfigHandler = appHandler.NewConfigHandler(
 		setConfigUseCase,
 		getConfigUseCase,
 		resetConfigUseCase,
 		configFormatter,
+	)
+
+	c.EnvironmentHandler = appHandler.NewEnvironmentHandler(
+		getEnvironmentUseCase,
+		switchEnvironmentUseCase,
 	)
 
 	return c

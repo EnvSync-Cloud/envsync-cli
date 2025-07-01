@@ -1,13 +1,13 @@
-package app
+package commands
 
 import (
 	"github.com/urfave/cli/v3"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/app"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 )
 
-// Commands returns all app-related commands
-func Commands(handler *app.Handler) *cli.Command {
+// AppCommands returns all app-related commands
+func AppCommands(handler *handlers.AppHandler) *cli.Command {
 	return &cli.Command{
 		Name:  "app",
 		Usage: "Interact with your applications",
@@ -19,7 +19,7 @@ func Commands(handler *app.Handler) *cli.Command {
 	}
 }
 
-func CreateCommand(handler *app.Handler) *cli.Command {
+func CreateCommand(handler *handlers.AppHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "create",
 		Usage:  "Create a new application",
@@ -44,7 +44,7 @@ func CreateCommand(handler *app.Handler) *cli.Command {
 	}
 }
 
-func DeleteCommand(handler *app.Handler) *cli.Command {
+func DeleteCommand(handler *handlers.AppHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "delete",
 		Usage:  "Delete an application",
@@ -64,7 +64,7 @@ func DeleteCommand(handler *app.Handler) *cli.Command {
 	}
 }
 
-func ListCommand(handler *app.Handler) *cli.Command {
+func ListCommand(handler *handlers.AppHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "list",
 		Usage:  "List all applications",

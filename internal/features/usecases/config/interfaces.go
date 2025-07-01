@@ -8,22 +8,17 @@ import (
 
 // SetConfigUseCase defines the interface for setting configuration values
 type SetConfigUseCase interface {
-	Execute(ctx context.Context, req SetConfigRequest) error
+	Execute(context.Context, SetConfigRequest) error
 }
 
-// GetConfigUseCase defines the interface for getting configuration values
+// GetConfigUseCase defines the irface for getting configuration values
 type GetConfigUseCase interface {
-	Execute(ctx context.Context, req GetConfigRequest) (*GetConfigResponse, error)
+	Execute(context.Context, GetConfigRequest) (*GetConfigResponse, error)
 }
 
-// ValidateConfigUseCase defines the interface for validating configuration
-type ValidateConfigUseCase interface {
-	Execute(ctx context.Context, req ValidateConfigRequest) (*ValidateConfigResponse, error)
-}
-
-// ResetConfigUseCase defines the interface for resetting configuration
+// ResetConfseCase defines the inface for resetting configuration
 type ResetConfigUseCase interface {
-	Execute(ctx context.Context, req ResetConfigRequest) error
+	Execute(context.Context, ResetConfigRequest) error
 }
 
 // Request/Response types

@@ -1,4 +1,4 @@
-package config
+package handlers
 
 import (
 	"context"
@@ -10,20 +10,20 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
-type Handler struct {
+type ConfigHandler struct {
 	setUseCase   config.SetConfigUseCase
 	getUseCase   config.GetConfigUseCase
 	resetUseCase config.ResetConfigUseCase
 	formatter    *formatters.ConfigFormatter
 }
 
-func NewHandler(
+func NewConfigHandler(
 	setUseCase config.SetConfigUseCase,
 	getUseCase config.GetConfigUseCase,
 	resetUseCase config.ResetConfigUseCase,
 	formatter *formatters.ConfigFormatter,
-) *Handler {
-	return &Handler{
+) *ConfigHandler {
+	return &ConfigHandler{
 		setUseCase:   setUseCase,
 		getUseCase:   getUseCase,
 		resetUseCase: resetUseCase,
@@ -31,7 +31,7 @@ func NewHandler(
 	}
 }
 
-func (h *Handler) Set(ctx context.Context, cmd *cli.Command) error {
+func (h *ConfigHandler) Set(ctx context.Context, cmd *cli.Command) error {
 	args := cmd.Args()
 
 	if args.Len() < 1 {
@@ -72,7 +72,7 @@ func (h *Handler) Set(ctx context.Context, cmd *cli.Command) error {
 	return h.formatter.FormatSuccess(cmd.Writer, "Configuration updated successfully!")
 }
 
-func (h *Handler) Get(ctx context.Context, cmd *cli.Command) error {
+func (h *ConfigHandler) Get(ctx context.Context, cmd *cli.Command) error {
 	args := cmd.Args()
 	keys := make([]string, args.Len())
 	for i := 0; i < args.Len(); i++ {
@@ -114,7 +114,7 @@ func (h *Handler) Get(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func (h *Handler) Reset(ctx context.Context, cmd *cli.Command) error {
+func (h *ConfigHandler) Reset(ctx context.Context, cmd *cli.Command) error {
 	args := cmd.Args()
 	keys := make([]string, args.Len())
 	for i := 0; i < args.Len(); i++ {
@@ -141,7 +141,7 @@ func (h *Handler) Reset(ctx context.Context, cmd *cli.Command) error {
 
 // Helper methods
 
-func (h *Handler) formatUseCaseError(cmd *cli.Command, err error) error {
+func (h *ConfigHandler) formatUseCaseError(cmd *cli.Command, err error) error {
 	// Handle different types of use case errors
 	switch e := err.(type) {
 	case *config.ConfigError:

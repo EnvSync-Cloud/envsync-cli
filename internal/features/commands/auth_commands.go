@@ -1,13 +1,13 @@
-package auth
+package commands
 
 import (
 	"github.com/urfave/cli/v3"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/auth"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 )
 
-// Commands returns all auth-related commands
-func Commands(handler *auth.Handler) *cli.Command {
+// AuthCommands returns all auth-related commands
+func AuthCommands(handler *handlers.AuthHandler) *cli.Command {
 	return &cli.Command{
 		Name:  "auth",
 		Usage: "Authentication and user management",
@@ -19,7 +19,7 @@ func Commands(handler *auth.Handler) *cli.Command {
 	}
 }
 
-func LoginCommand(handler *auth.Handler) *cli.Command {
+func LoginCommand(handler *handlers.AuthHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "login",
 		Usage:  "Authenticate with EnvSync Cloud",
@@ -39,7 +39,7 @@ Examples:
 	}
 }
 
-func LogoutCommand(handler *auth.Handler) *cli.Command {
+func LogoutCommand(handler *handlers.AuthHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "logout",
 		Usage:  "Sign out and clear authentication token",
@@ -64,7 +64,7 @@ Examples:
 	}
 }
 
-func WhoamiCommand(handler *auth.Handler) *cli.Command {
+func WhoamiCommand(handler *handlers.AuthHandler) *cli.Command {
 	return &cli.Command{
 		Name:   "whoami",
 		Usage:  "Display current user information and authentication status",

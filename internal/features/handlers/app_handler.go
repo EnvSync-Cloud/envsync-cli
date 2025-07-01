@@ -1,4 +1,4 @@
-package app
+package handlers
 
 import (
 	"context"
@@ -10,20 +10,20 @@ import (
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
-type Handler struct {
+type AppHandler struct {
 	createUseCase app.CreateAppUseCase
 	deleteUseCase app.DeleteAppUseCase
 	listUseCase   app.ListAppsUseCase
 	formatter     *formatters.AppFormatter
 }
 
-func NewHandler(
+func NewAppHandler(
 	createUseCase app.CreateAppUseCase,
 	deleteUseCase app.DeleteAppUseCase,
 	listUseCase app.ListAppsUseCase,
 	formatter *formatters.AppFormatter,
-) *Handler {
-	return &Handler{
+) *AppHandler {
+	return &AppHandler{
 		createUseCase: createUseCase,
 		deleteUseCase: deleteUseCase,
 		listUseCase:   listUseCase,
@@ -31,7 +31,7 @@ func NewHandler(
 	}
 }
 
-func (h *Handler) Create(ctx context.Context, cmd *cli.Command) error {
+func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 	var application domain.Application
 	if cmd.IsSet("name") {
 		application.Name = cmd.String("name")
@@ -72,7 +72,7 @@ func (h *Handler) Create(ctx context.Context, cmd *cli.Command) error {
 	return h.formatter.FormatCreateSuccessMessage(cmd.Writer, *app)
 }
 
-func (h *Handler) Delete(ctx context.Context, cmd *cli.Command) error {
+func (h *AppHandler) Delete(ctx context.Context, cmd *cli.Command) error {
 	_ = h.deleteUseCase.Execute(ctx)
 
 	h.formatter.FormatSuccess(cmd.Writer, "Successfully deleted application!")
@@ -80,7 +80,7 @@ func (h *Handler) Delete(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func (h *Handler) List(ctx context.Context, cmd *cli.Command) error {
+func (h *AppHandler) List(ctx context.Context, cmd *cli.Command) error {
 	_ = h.listUseCase.Execute(ctx)
 
 	return nil
@@ -88,7 +88,7 @@ func (h *Handler) List(ctx context.Context, cmd *cli.Command) error {
 
 // Helper methods
 
-func (h *Handler) formatUseCaseError(cmd *cli.Command, err error) error {
+func (h *AppHandler) formatUseCaseError(cmd *cli.Command, err error) error {
 	// Handle different types of use case errors
 	switch e := err.(type) {
 	case *app.AppError:

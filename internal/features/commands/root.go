@@ -7,12 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
-	appCommands "github.com/EnvSync-Cloud/envsync-cli/internal/features/commands/app"
-	authCommands "github.com/EnvSync-Cloud/envsync-cli/internal/features/commands/auth"
-	configCommands "github.com/EnvSync-Cloud/envsync-cli/internal/features/commands/config"
-	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/app"
-	authHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/auth"
-	configHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers/config"
+	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/logger"
 )
 
@@ -25,20 +20,23 @@ const (
 )
 
 type CommandRegistry struct {
-	appHandler    *appHandler.Handler
-	authHandler   *authHandler.Handler
-	configHandler *configHandler.Handler
+	appHandler         *appHandler.AppHandler
+	authHandler        *appHandler.AuthHandler
+	configHandler      *appHandler.ConfigHandler
+	environmentHandler *appHandler.EnvironmentHandler
 }
 
 func NewCommandRegistry(
-	appHandler *appHandler.Handler,
-	authHandler *authHandler.Handler,
-	configHandler *configHandler.Handler,
+	appHandler *appHandler.AppHandler,
+	authHandler *appHandler.AuthHandler,
+	configHandler *appHandler.ConfigHandler,
+	environmentHandler *appHandler.EnvironmentHandler,
 ) *CommandRegistry {
 	return &CommandRegistry{
-		appHandler:    appHandler,
-		authHandler:   authHandler,
-		configHandler: configHandler,
+		appHandler:         appHandler,
+		authHandler:        authHandler,
+		configHandler:      configHandler,
+		environmentHandler: environmentHandler,
 	}
 }
 
@@ -58,10 +56,12 @@ func (r *CommandRegistry) RegisterCLI() *cli.Command {
 		},
 		Before: r.beforeHook,
 		After:  r.afterHook,
+		Action: RootCommand(),
 		Commands: []*cli.Command{
-			appCommands.Commands(r.appHandler),
-			authCommands.Commands(r.authHandler),
-			configCommands.Commands(r.configHandler),
+			AppCommands(r.appHandler),
+			AuthCommands(r.authHandler),
+			ConfigCommands(r.configHandler),
+			EnvironmentCommands(r.environmentHandler),
 		},
 	}
 }
@@ -76,4 +76,15 @@ func (r *CommandRegistry) afterHook(ctx context.Context, cmd *cli.Command) error
 		l.Sync()
 	}
 	return nil
+}
+
+func RootCommand() cli.ActionFunc {
+	return func(ctx context.Context, cmd *cli.Command) error {
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		cmd.Writer.Write([]byte("Welcome to EnvSync CLI!\n"))
+		cmd.Writer.Write([]byte("Use 'envsync --help' to see available commands.\n"))
+		cmd.Writer.Write([]byte("For more information, visit: https://envsync.cloud/docs\n"))
+		cmd.Writer.Write([]byte("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"))
+		return nil
+	}
 }
