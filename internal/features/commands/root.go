@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/constants"
-	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/logger"
 )
 
@@ -20,21 +20,23 @@ const (
 )
 
 type CommandRegistry struct {
-	appHandler         *appHandler.AppHandler
-	authHandler        *appHandler.AuthHandler
-	configHandler      *appHandler.ConfigHandler
-	environmentHandler *appHandler.EnvironmentHandler
-	syncHandler        *appHandler.SyncHandler
-	initHandler        *appHandler.InitHandler
+	appHandler         *handlers.AppHandler
+	authHandler        *handlers.AuthHandler
+	configHandler      *handlers.ConfigHandler
+	environmentHandler *handlers.EnvironmentHandler
+	syncHandler        *handlers.SyncHandler
+	initHandler        *handlers.InitHandler
+	runHandler         *handlers.RunHandler
 }
 
 func NewCommandRegistry(
-	appHandler *appHandler.AppHandler,
-	authHandler *appHandler.AuthHandler,
-	configHandler *appHandler.ConfigHandler,
-	environmentHandler *appHandler.EnvironmentHandler,
-	syncHandler *appHandler.SyncHandler,
-	initHandler *appHandler.InitHandler,
+	appHandler *handlers.AppHandler,
+	authHandler *handlers.AuthHandler,
+	configHandler *handlers.ConfigHandler,
+	environmentHandler *handlers.EnvironmentHandler,
+	syncHandler *handlers.SyncHandler,
+	initHandler *handlers.InitHandler,
+	runHandler *handlers.RunHandler,
 ) *CommandRegistry {
 	return &CommandRegistry{
 		appHandler:         appHandler,
@@ -43,6 +45,7 @@ func NewCommandRegistry(
 		environmentHandler: environmentHandler,
 		syncHandler:        syncHandler,
 		initHandler:        initHandler,
+		runHandler:         runHandler,
 	}
 }
 
@@ -71,6 +74,7 @@ func (r *CommandRegistry) RegisterCLI() *cli.Command {
 			PullCommand(r.syncHandler),
 			PushCommand(r.syncHandler),
 			InitCommand(r.initHandler),
+			RunCommand(r.runHandler),
 		},
 	}
 }

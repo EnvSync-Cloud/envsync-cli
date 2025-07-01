@@ -6,12 +6,13 @@ import (
 	"os"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/commands"
-	appHandler "github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/handlers"
 	appUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/app"
 	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
 	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
 	envUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/environment"
 	inituc "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/init"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/run"
 	syncUseCase "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/sync"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
@@ -28,6 +29,7 @@ func main() {
 		container.EnvironmentHandler,
 		container.SyncHandler,
 		container.InitHandler,
+		container.RunHandler,
 	)
 
 	// Build CLI app
@@ -41,12 +43,13 @@ func main() {
 
 // Container holds the handler dependencies
 type Container struct {
-	AppHandler         *appHandler.AppHandler
-	AuthHandler        *appHandler.AuthHandler
-	ConfigHandler      *appHandler.ConfigHandler
-	EnvironmentHandler *appHandler.EnvironmentHandler
-	SyncHandler        *appHandler.SyncHandler
-	InitHandler        *appHandler.InitHandler
+	AppHandler         *handlers.AppHandler
+	AuthHandler        *handlers.AuthHandler
+	ConfigHandler      *handlers.ConfigHandler
+	EnvironmentHandler *handlers.EnvironmentHandler
+	SyncHandler        *handlers.SyncHandler
+	InitHandler        *handlers.InitHandler
+	RunHandler         *handlers.RunHandler
 }
 
 // buildDependencyContainer creates and wires all handler dependencies
@@ -79,40 +82,48 @@ func buildDependencyContainer() *Container {
 
 	initUC := inituc.NewInitUseCase()
 
+	injectUseCase := run.NewInjectEnv()
+	runUseCase := run.NewRedactor()
+
 	// Initialize handlers
-	c.AppHandler = appHandler.NewAppHandler(
+	c.AppHandler = handlers.NewAppHandler(
 		createAppUseCase,
 		deleteAppUseCase,
 		listAppsUseCase,
 		appFormatter,
 	)
 
-	c.AuthHandler = appHandler.NewAuthHandler(
+	c.AuthHandler = handlers.NewAuthHandler(
 		loginUseCase,
 		logoutUseCase,
 		whoamiUseCase,
 		authFormatter,
 	)
 
-	c.ConfigHandler = appHandler.NewConfigHandler(
+	c.ConfigHandler = handlers.NewConfigHandler(
 		setConfigUseCase,
 		getConfigUseCase,
 		resetConfigUseCase,
 		configFormatter,
 	)
 
-	c.EnvironmentHandler = appHandler.NewEnvironmentHandler(
+	c.EnvironmentHandler = handlers.NewEnvironmentHandler(
 		getEnvironmentUseCase,
 		switchEnvironmentUseCase,
 	)
 
-	c.SyncHandler = appHandler.NewSyncHandler(
+	c.SyncHandler = handlers.NewSyncHandler(
 		pullUseCase,
 		pushUseCase,
 	)
 
-	c.InitHandler = appHandler.NewInitHandler(
+	c.InitHandler = handlers.NewInitHandler(
 		initUC,
+	)
+
+	c.RunHandler = handlers.NewRunHandler(
+		runUseCase,
+		injectUseCase,
 	)
 
 	return c
