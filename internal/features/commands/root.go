@@ -25,6 +25,7 @@ type CommandRegistry struct {
 	configHandler      *appHandler.ConfigHandler
 	environmentHandler *appHandler.EnvironmentHandler
 	syncHandler        *appHandler.SyncHandler
+	initHandler        *appHandler.InitHandler
 }
 
 func NewCommandRegistry(
@@ -33,6 +34,7 @@ func NewCommandRegistry(
 	configHandler *appHandler.ConfigHandler,
 	environmentHandler *appHandler.EnvironmentHandler,
 	syncHandler *appHandler.SyncHandler,
+	initHandler *appHandler.InitHandler,
 ) *CommandRegistry {
 	return &CommandRegistry{
 		appHandler:         appHandler,
@@ -40,6 +42,7 @@ func NewCommandRegistry(
 		configHandler:      configHandler,
 		environmentHandler: environmentHandler,
 		syncHandler:        syncHandler,
+		initHandler:        initHandler,
 	}
 }
 
@@ -67,6 +70,7 @@ func (r *CommandRegistry) RegisterCLI() *cli.Command {
 			EnvironmentCommands(r.environmentHandler),
 			PullCommand(r.syncHandler),
 			PushCommand(r.syncHandler),
+			InitCommand(r.initHandler),
 		},
 	}
 }

@@ -11,6 +11,7 @@ import (
 	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
 	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
 	envUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/environment"
+	inituc "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/init"
 	syncUseCase "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/sync"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
@@ -26,6 +27,7 @@ func main() {
 		container.ConfigHandler,
 		container.EnvironmentHandler,
 		container.SyncHandler,
+		container.InitHandler,
 	)
 
 	// Build CLI app
@@ -44,6 +46,7 @@ type Container struct {
 	ConfigHandler      *appHandler.ConfigHandler
 	EnvironmentHandler *appHandler.EnvironmentHandler
 	SyncHandler        *appHandler.SyncHandler
+	InitHandler        *appHandler.InitHandler
 }
 
 // buildDependencyContainer creates and wires all handler dependencies
@@ -73,6 +76,8 @@ func buildDependencyContainer() *Container {
 
 	pullUseCase := syncUseCase.NewPullUseCase()
 	pushUseCase := syncUseCase.NewPushUseCase()
+
+	initUC := inituc.NewInitUseCase()
 
 	// Initialize handlers
 	c.AppHandler = appHandler.NewAppHandler(
@@ -104,6 +109,10 @@ func buildDependencyContainer() *Container {
 	c.SyncHandler = appHandler.NewSyncHandler(
 		pullUseCase,
 		pushUseCase,
+	)
+
+	c.InitHandler = appHandler.NewInitHandler(
+		initUC,
 	)
 
 	return c
