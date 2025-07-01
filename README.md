@@ -26,11 +26,21 @@ EnvSync keeps your `.env` files, configuration secrets, and environment variable
 
 ### Install from Release
 
-```bash
-curl -L https://github.com/EnvSync-Cloud/envsync-cli/releases/latest/download/envsync-linux-amd64 -o envsync
-chmod +x envsync
-sudo mv envsync /usr/local/bin/
-```
+Download the latest release binary for your platform from the [Releases page](https://github.com/EnvSync-Cloud/envsync-cli/releases/) and follow these steps:
+
+1. Download the binary for your OS (Linux, macOS, Windows)
+2. Make it executable (if necessary)   
+   ```bash
+   chmod +x envsync
+   ```
+3. Move it to a directory in your PATH, e.g., `/usr/local/bin/`:
+   ```bash
+   sudo mv envsync /usr/local/bin/
+   ```
+4. Verify the installation:
+   ```bash  
+   envsync --help
+   ```
 
 ### Install from Source
 
