@@ -101,6 +101,9 @@ func (s *auth) Whoami() (*domain.UserInfo, error) {
 
 // Logout clears the access token from configuration
 func (s *auth) Logout() error {
+	// TODO: Refactor this implementation to use a dedicated logout repository
+	// which hits logout endpoint
+
 	cfg := config.New()
 	cfg.AccessToken = ""
 
