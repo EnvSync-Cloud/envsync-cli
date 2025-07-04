@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/huh"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
+	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/component"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/models/app_model"
 )
 
@@ -96,13 +97,23 @@ func (f *AppFactory) DeleteAppsTUI(apps []domain.Application) ([]domain.Applicat
 // ListAppsInteractive runs the interactive app listing flow
 func (f *AppFactory) ListAppsInteractive(apps []domain.Application) error {
 	// // Create the list model with loading capability
-	model := app_model.NewListAppModelWithApps(apps)
+	config := component.DefaultGenericListConfig(
+		apps,
+		"🚀 Applications List",
+		func(app domain.Application) string {
+			return fmt.Sprintf("📛 %s", app.Name)
+		},
+		func(app domain.Application) string {
+			return fmt.Sprintf("🆔 %s\n📝 %s", app.ID, app.Description)
+		},
+	)
+
+	model := component.NewGenericListModel(config)
 
 	// Run the program
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
 	)
 
 	_, err := program.Run()
