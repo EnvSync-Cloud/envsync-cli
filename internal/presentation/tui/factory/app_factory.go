@@ -11,7 +11,7 @@ import (
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/component"
-	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/models/app_model"
+	// "github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/models/app_model"
 )
 
 type AppFactory struct{}
@@ -78,20 +78,37 @@ func (f *AppFactory) CreateAppTUI(ctx context.Context, app *domain.Application) 
 
 // DeleteAppTUI runs the interactive app deletion flow using Bubble Tea
 func (f *AppFactory) DeleteAppsTUI(apps []domain.Application) ([]domain.Application, error) {
-	m := app_model.NewDeleteAppModel(apps)
+	adapter := func(item domain.Application, selected bool, multiSelect bool) component.GenericListItem[domain.Application] {
+		return component.GenericListItem[domain.Application]{
+			Item:        item,
+			TitleStr:    item.Name,
+			DescStr:     item.ID,
+			FilterStr:   item.Name,
+			Selected:    selected,
+			MultiSelect: multiSelect,
+		}
+	}
+	keyFn := func(e domain.Application) string { return e.ID }
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	model := component.NewSelectableListModel(
+		apps,
+		adapter,
+		"🗑️ Select Environment",
+		80, 20,
+		true,
+		keyFn,
+	)
 
-	model, err := p.Run()
+	program := tea.NewProgram(model, tea.WithAltScreen())
+
+	finalModel, err := program.Run()
 	if err != nil {
 		return nil, fmt.Errorf("error running delete app TUI: %w", err)
 	}
 
-	if deleteModel, ok := model.(*app_model.DeleteAppModel); ok {
-		return deleteModel.GetSelectedApps(), nil
-	}
+	deleteModel := finalModel.(*component.SelectableListModel[domain.Application]).GetSelectedItems()
 
-	return nil, fmt.Errorf("unexpected model type: %T", model)
+	return deleteModel, nil
 }
 
 // ListAppsInteractive runs the interactive app listing flow
