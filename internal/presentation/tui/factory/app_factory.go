@@ -103,7 +103,7 @@ func (f *AppFactory) DeleteAppsTUI(apps []domain.Application) ([]domain.Applicat
 
 	finalModel, err := program.Run()
 	if err != nil {
-		return nil, fmt.Errorf("error running delete app TUI: %w", err)
+		return nil, err
 	}
 
 	deleteModel := finalModel.(*component.SelectableListModel[domain.Application]).GetSelectedItems()

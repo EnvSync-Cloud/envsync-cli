@@ -51,9 +51,8 @@ func DeleteCommand(handler *handlers.AppHandler) *cli.Command {
 		Action: handler.Delete,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "id",
-				Usage:   "Application ID to delete",
-				Aliases: []string{"i"},
+				Name:  "id",
+				Usage: "Application ID to delete",
 			},
 			&cli.StringFlag{
 				Name:    "name",

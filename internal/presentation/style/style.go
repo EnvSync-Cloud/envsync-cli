@@ -89,8 +89,7 @@ var (
 			Bold(true)
 
 	ErrorStyle = lipgloss.NewStyle().
-			Foreground(ErrorColor).
-			Bold(true)
+			Foreground(ErrorColor)
 
 	WarningStyle = lipgloss.NewStyle().
 			Foreground(WarningColor).

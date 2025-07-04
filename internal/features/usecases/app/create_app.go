@@ -93,7 +93,7 @@ func (uc *createAppUseCase) validateBusinessRules(app domain.Application) error 
 func (uc *createAppUseCase) isValidAppName(name string) bool {
 	// Allow alphanumeric characters, hyphens, and underscores
 	// Must start with a letter or number
-	pattern := `^[a-zA-Z0-9][a-zA-Z0-9_-]*$`
+	pattern := `^[a-zA-Z0-9][a-zA-Z0-9 _-]*$`
 	matched, _ := regexp.MatchString(pattern, name)
 	return matched
 }

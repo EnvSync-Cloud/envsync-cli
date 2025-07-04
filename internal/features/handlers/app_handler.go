@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/urfave/cli/v3"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
@@ -60,12 +63,14 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 
 	app, err := h.createUseCase.Execute(ctx, application)
 	if err != nil {
-		return h.formatUseCaseError(cmd, err)
+		if !errors.Is(err, tea.ErrProgramKilled) {
+			return h.formatUseCaseError(cmd, err)
+		}
 	}
 
 	if cmd.Bool("json") {
 		// If JSON output is requested, format the application as JSON
-		return h.formatter.BaseFormatter.FormatJSON(cmd.Writer, app)
+		return h.formatter.FormatJSON(cmd.Writer, app)
 	}
 
 	// Display success message
@@ -73,15 +78,53 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 }
 
 func (h *AppHandler) Delete(ctx context.Context, cmd *cli.Command) error {
-	_ = h.deleteUseCase.Execute(ctx)
+	if cmd.IsSet("json") && (!cmd.IsSet("id") && !cmd.IsSet("name")) {
+		return h.formatter.FormatJSONError(cmd.Writer, errors.New("Application ID or Name is required for deletion."))
+	}
 
-	h.formatter.FormatSuccess(cmd.Writer, "Successfully deleted application!")
+	jsonOutput := cmd.Bool("json")
+
+	// Set both appID, appName and json to context
+	ctx = context.WithValue(ctx, "appID", cmd.String("id"))
+	ctx = context.WithValue(ctx, "appName", cmd.String("name"))
+
+	deletedApps, err := h.deleteUseCase.Execute(ctx)
+	if err != nil {
+		return h.formatUseCaseError(cmd, err)
+	}
+
+	if jsonOutput {
+		jsonData := map[string]any{
+			"message":      "Applications deleted successfully",
+			"deleted_apps": deletedApps,
+		}
+		return h.formatter.FormatJSON(cmd.Writer, jsonData)
+	}
+
+	if len(deletedApps) > 0 {
+		successMsg := "Successfully deleted applications:\n"
+		for i, app := range deletedApps {
+			successMsg += fmt.Sprintf("%d) %s (ID: %s)\n", i+1, app.Name, app.ID)
+		}
+		h.formatter.FormatSuccess(cmd.Writer, successMsg)
+	} else {
+		h.formatter.FormatWarning(cmd.Writer, "No application was selected.")
+	}
 
 	return nil
 }
 
 func (h *AppHandler) List(ctx context.Context, cmd *cli.Command) error {
-	_ = h.listUseCase.Execute(ctx)
+	ctx = context.WithValue(ctx, "json", cmd.Bool("json"))
+
+	apps, err := h.listUseCase.Execute(ctx)
+	if err != nil {
+		return h.formatUseCaseError(cmd, err)
+	}
+
+	if cmd.Bool("json") {
+		return h.formatter.FormatJSON(cmd.Writer, apps)
+	}
 
 	return nil
 }
@@ -89,6 +132,11 @@ func (h *AppHandler) List(ctx context.Context, cmd *cli.Command) error {
 // Helper methods
 
 func (h *AppHandler) formatUseCaseError(cmd *cli.Command, err error) error {
+	// If JSON output is requested, use FormatJSONError
+	if cmd.Bool("json") {
+		return h.formatter.FormatJSONError(cmd.Writer, err)
+	}
+
 	// Handle different types of use case errors
 	switch e := err.(type) {
 	case *app.AppError:
@@ -103,6 +151,8 @@ func (h *AppHandler) formatUseCaseError(cmd *cli.Command, err error) error {
 			return h.formatter.FormatError(cmd.Writer, "Access denied: "+e.Message)
 		case app.AppErrorCodeInUse:
 			return h.formatter.FormatWarning(cmd.Writer, "Cannot complete operation: "+e.Message)
+		case app.AppErrorTUI:
+			return h.formatter.FormatError(cmd.Writer, "TUI error: "+e.Message)
 		default:
 			return h.formatter.FormatError(cmd.Writer, "Service error: "+e.Message)
 		}

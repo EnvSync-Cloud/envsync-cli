@@ -27,3 +27,10 @@ func (f *BaseFormatter) FormatJSON(writer io.Writer, data any) error {
 	_, err = writer.Write([]byte("\n"))
 	return err
 }
+
+func (f *BaseFormatter) FormatJSONError(writer io.Writer, err error) error {
+	jsonError := map[string]string{
+		"error": err.Error(),
+	}
+	return f.FormatJSON(writer, jsonError)
+}

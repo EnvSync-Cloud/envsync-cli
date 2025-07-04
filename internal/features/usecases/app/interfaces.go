@@ -13,10 +13,10 @@ type CreateAppUseCase interface {
 
 // DeleteAppUseCase defines the interface for deleting applications
 type DeleteAppUseCase interface {
-	Execute(context.Context) error
+	Execute(context.Context) ([]domain.Application, error)
 }
 
 // ListAppsUseCase defines the interface for listing applications
 type ListAppsUseCase interface {
-	Execute(context.Context) error
+	Execute(context.Context) ([]domain.Application, error)
 }

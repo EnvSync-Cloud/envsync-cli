@@ -64,12 +64,21 @@ const (
 	AppErrorCodeAccessDenied  = "ACCESS_DENIED"
 	AppErrorCodeInUse         = "APP_IN_USE"
 	AppErrorCodeServiceError  = "SERVICE_ERROR"
+	AppErrorTUI               = "TUI_ERROR"
 )
 
 // Helper functions to create structured errors
 func NewValidationError(message string, cause error) *AppError {
 	return &AppError{
 		Code:    AppErrorCodeValidation,
+		Message: message,
+		Cause:   cause,
+	}
+}
+
+func NewTUIError(message string, cause error) *AppError {
+	return &AppError{
+		Code:    AppErrorTUI,
 		Message: message,
 		Cause:   cause,
 	}

@@ -97,6 +97,7 @@ func (m *SelectableListModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
+			return m, tea.Quit
 		case "a":
 			if m.multiSelect {
 				m.selectAll()

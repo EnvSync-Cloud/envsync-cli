@@ -2,7 +2,11 @@ package app
 
 import (
 	"context"
+	"errors"
 
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/factory"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/services"
 )
@@ -21,14 +25,31 @@ func NewListAppsUseCase() ListAppsUseCase {
 	}
 }
 
-func (uc *listAppsUseCase) Execute(ctx context.Context) error {
+func (uc *listAppsUseCase) Execute(ctx context.Context) ([]domain.Application, error) {
 	// Get applications from service
-	apps, err := uc.appService.GetAllApps()
+	apps, err := uc.findAllApplications()
 	if err != nil {
-		return NewServiceError("failed to retrieve applications", err)
+		return nil, err
 	}
 
-	_ = uc.tui.ListAppsInteractive(apps)
+	json, _ := ctx.Value("json").(bool)
 
-	return nil
+	if !json {
+		if err := uc.tui.ListAppsInteractive(apps); err != nil {
+			if !errors.Is(err, tea.ErrProgramKilled) {
+				return nil, NewTUIError("failed to list applications", err)
+			}
+		}
+	}
+
+	return apps, nil
+}
+
+func (uc *listAppsUseCase) findAllApplications() ([]domain.Application, error) {
+	// Retrieve all applications from the service
+	apps, err := uc.appService.GetAllApps()
+	if err != nil {
+		return nil, NewServiceError("failed to retrieve applications", err)
+	}
+	return apps, nil
 }
