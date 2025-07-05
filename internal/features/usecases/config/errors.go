@@ -5,13 +5,12 @@ import "errors"
 // Configuration use case errors
 var (
 	// Validation errors
-	ErrNoConfigValues     = errors.New("no configuration values provided")
-	ErrEmptyConfigKey     = errors.New("configuration key cannot be empty")
-	ErrInvalidConfigKey   = errors.New("invalid configuration key")
-	ErrEmptyAccessToken   = errors.New("access token cannot be empty")
-	ErrInvalidAccessToken = errors.New("access token is invalid or too short")
-	ErrEmptyBackendURL    = errors.New("backend URL cannot be empty")
-	ErrInvalidBackendURL  = errors.New("backend URL is invalid")
+	ErrNoConfigValues   = errors.New("no configuration values provided")
+	ErrEmptyConfigKey   = errors.New("configuration key cannot be empty")
+	ErrInvalidConfigKey = errors.New("invalid configuration key")
+
+	ErrEmptyBackendURL   = errors.New("backend URL cannot be empty")
+	ErrInvalidBackendURL = errors.New("backend URL is invalid")
 
 	// File system errors
 	ErrConfigFileNotFound   = errors.New("configuration file not found")
@@ -127,17 +126,14 @@ const (
 
 // Common validation messages
 const (
-	MsgAccessTokenRequired = "Access token is required for authentication"
-	MsgBackendURLRequired  = "Backend URL is required to connect to the service"
-	MsgAccessTokenWeak     = "Access token appears to be weak or invalid format"
-	MsgBackendURLInsecure  = "Backend URL uses insecure HTTP protocol"
-	MsgConfigIncomplete    = "Configuration is incomplete"
-	MsgConfigOutdated      = "Configuration format appears to be outdated"
+	MsgBackendURLRequired = "Backend URL is required to connect to the service"
+	MsgBackendURLInsecure = "Backend URL uses insecure HTTP protocol"
+	MsgConfigIncomplete   = "Configuration is incomplete"
+	MsgConfigOutdated     = "Configuration format appears to be outdated"
 )
 
 // Suggestion messages
 const (
-	SuggestSetAccessToken = "Use 'envsync config set access_token=<your-token>' to set your access token"
 	SuggestSetBackendURL  = "Use 'envsync config set backend_url=<url>' to set the backend URL"
 	SuggestUseHTTPS       = "Consider using HTTPS for better security"
 	SuggestRunLogin       = "Run 'envsync login' to authenticate and set up configuration"

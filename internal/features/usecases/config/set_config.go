@@ -52,12 +52,10 @@ func (uc *setConfigUseCase) setConfigValue(cfg *config.AppConfig, key, value str
 	normalizedKey := strings.ToLower(key)
 
 	switch normalizedKey {
-	case "access_token", "accesstoken":
-		cfg.AccessToken = value
 	case "backend_url", "backendurl":
 		cfg.BackendURL = value
 	default:
-		return fmt.Errorf("unknown configuration key: '%s'. Valid keys are: access_token, backend_url", key)
+		return fmt.Errorf("unknown configuration key: '%s'. Valid keys are: backend_url", key)
 	}
 
 	return nil
@@ -66,20 +64,12 @@ func (uc *setConfigUseCase) setConfigValue(cfg *config.AppConfig, key, value str
 func (uc *setConfigUseCase) validateConfiguration(cfg config.AppConfig) error {
 	var issues []string
 
-	// Validate access token
-	if cfg.AccessToken != "" {
-		if len(cfg.AccessToken) < 10 {
-			issues = append(issues, "access token appears to be too short")
-		}
-		// Add more token validation as needed
-	}
-
 	// Validate backend URL
 	if cfg.BackendURL != "" {
 		if !uc.isValidURL(cfg.BackendURL) {
 			issues = append(issues, "backend URL format is invalid")
 		}
-		if strings.HasPrefix(cfg.BackendURL, "http://") {
+		if strings.HasPrefix(cfg.BackendURL, "http://") && !uc.isLocalAddress(cfg.BackendURL) {
 			issues = append(issues, "backend URL uses insecure HTTP protocol (consider using HTTPS)")
 		}
 	}
@@ -113,6 +103,24 @@ func (uc *setConfigUseCase) isValidURL(url string) bool {
 	if strings.HasPrefix(url, "https://") {
 		domain := url[8:] // Remove "https://"
 		return len(domain) > 0 && !strings.Contains(domain[:1], "/")
+	}
+
+	return false
+}
+
+func (uc *setConfigUseCase) isLocalAddress(url string) bool {
+	// Allow HTTP for localhost and local addresses
+	localPatterns := []string{
+		"http://localhost",
+		"http://127.0.0.1",
+		"http://0.0.0.0",
+		"http://::1",
+	}
+
+	for _, pattern := range localPatterns {
+		if strings.HasPrefix(url, pattern) {
+			return true
+		}
 	}
 
 	return false

@@ -117,10 +117,8 @@ func (r ResetConfigRequest) Validate() error {
 // Helper functions for validation
 func isValidConfigKey(key string) bool {
 	validKeys := map[string]bool{
-		"access_token": true,
-		"accesstoken":  true,
-		"backend_url":  true,
-		"backendurl":   true,
+		"backend_url": true,
+		"backendurl":  true,
 	}
 
 	return validKeys[key]
@@ -128,13 +126,6 @@ func isValidConfigKey(key string) bool {
 
 func validateConfigValue(key, value string) error {
 	switch key {
-	case "access_token", "accesstoken":
-		if value == "" {
-			return ErrEmptyAccessToken
-		}
-		if len(value) < 10 {
-			return ErrInvalidAccessToken
-		}
 	case "backend_url", "backendurl":
 		if value == "" {
 			return ErrEmptyBackendURL

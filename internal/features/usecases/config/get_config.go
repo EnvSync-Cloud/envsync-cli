@@ -60,8 +60,6 @@ func (uc *getConfigUseCase) getConfigValue(cfg config.AppConfig, key string) (st
 	normalizedKey := strings.ToLower(key)
 
 	switch normalizedKey {
-	case "access_token", "accesstoken":
-		return cfg.AccessToken, cfg.AccessToken != ""
 	case "backend_url", "backendurl":
 		return cfg.BackendURL, cfg.BackendURL != ""
 	default:
@@ -72,10 +70,6 @@ func (uc *getConfigUseCase) getConfigValue(cfg config.AppConfig, key string) (st
 func (uc *getConfigUseCase) getAllConfigValues(cfg config.AppConfig) map[string]string {
 	values := make(map[string]string)
 
-	if cfg.AccessToken != "" {
-		values["access_token"] = cfg.AccessToken
-	}
-
 	if cfg.BackendURL != "" {
 		values["backend_url"] = cfg.BackendURL
 	}
@@ -84,17 +78,13 @@ func (uc *getConfigUseCase) getAllConfigValues(cfg config.AppConfig) map[string]
 }
 
 func (uc *getConfigUseCase) isConfigEmpty(cfg config.AppConfig) bool {
-	return cfg.AccessToken == "" && cfg.BackendURL == ""
+	return cfg.BackendURL == ""
 }
 
 func (uc *getConfigUseCase) generateConfigWarnings(cfg config.AppConfig) []string {
 	var warnings []string
 
 	// Check for missing required configuration
-	if cfg.AccessToken == "" {
-		warnings = append(warnings, "Access token is not set. Use 'envsync config set access_token=<token>' to set it.")
-	}
-
 	if cfg.BackendURL == "" {
 		warnings = append(warnings, "Backend URL is not set. Use 'envsync config set backend_url=<url>' to set it.")
 	}
@@ -104,50 +94,5 @@ func (uc *getConfigUseCase) generateConfigWarnings(cfg config.AppConfig) []strin
 		warnings = append(warnings, "Backend URL uses insecure HTTP protocol. Consider using HTTPS for better security.")
 	}
 
-	// Check for potentially invalid access token
-	if cfg.AccessToken != "" && len(cfg.AccessToken) < 10 {
-		warnings = append(warnings, "Access token appears to be too short and may be invalid.")
-	}
-
 	return warnings
-}
-
-func (uc *getConfigUseCase) maskSensitiveValue(key, value string) string {
-	// Mask sensitive values for security
-	normalizedKey := strings.ToLower(key)
-
-	switch normalizedKey {
-	case "access_token", "accesstoken":
-		return uc.maskToken(value)
-	default:
-		return value
-	}
-}
-
-func (uc *getConfigUseCase) maskToken(token string) string {
-	if len(token) <= 8 {
-		return strings.Repeat("*", len(token))
-	}
-
-	// Show first 4 and last 4 characters
-	prefix := token[:4]
-	suffix := token[len(token)-4:]
-	middle := strings.Repeat("*", len(token)-8)
-
-	return prefix + middle + suffix
-}
-
-func (uc *getConfigUseCase) validateConfigIntegrity(cfg config.AppConfig) error {
-	// Perform basic integrity checks on the configuration
-
-	// Check if both access token and backend URL are set for full functionality
-	if cfg.AccessToken != "" && cfg.BackendURL == "" {
-		return NewValidationError("access token is set but backend URL is missing", "backend_url", nil)
-	}
-
-	if cfg.BackendURL != "" && cfg.AccessToken == "" {
-		return NewValidationError("backend URL is set but access token is missing", "access_token", nil)
-	}
-
-	return nil
 }

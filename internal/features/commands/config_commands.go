@@ -28,12 +28,9 @@ func SetCommand(handler *handlers.ConfigHandler) *cli.Command {
 		Description: `Set one or more configuration values.
 
 Examples:
-  envsync config set access_token=your_token_here
   envsync config set backend_url=https://api.envsync.cloud
-  envsync config set access_token=token backend_url=https://api.example.com
 
 Supported keys:
-  - access_token: Authentication token for EnvSync Cloud
   - backend_url: Backend API URL`,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -55,11 +52,9 @@ func GetCommand(handler *handlers.ConfigHandler) *cli.Command {
 
 Examples:
   envsync config get
-  envsync config get access_token
-  envsync config get access_token backend_url
+  envsync config get backend_url
 
 Supported keys:
-  - access_token: Authentication token for EnvSync Cloud
   - backend_url: Backend API URL`,
 	}
 }
@@ -74,8 +69,7 @@ func ResetCommand(handler *handlers.ConfigHandler) *cli.Command {
 
 Examples:
   envsync config reset
-  envsync config reset access_token
-  envsync config reset access_token backend_url
+  envsync config reset backend_url
 
 WARNING: This action cannot be undone. Consider backing up your configuration first.`,
 		Flags: []cli.Flag{
