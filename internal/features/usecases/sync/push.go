@@ -23,13 +23,13 @@ func NewPushUseCase() PushUseCase {
 func (uc *pushUseCase) Execute(ctx context.Context, configPath string) (SyncResponse, error) {
 	// Check if the configuration file exists
 	if err := uc.checkConfigFileExists(configPath); err != nil {
-		return SyncResponse{}, fmt.Errorf("configuration file check failed: %w", err)
+		return SyncResponse{}, NewFileSystemError("configuration file check failed", err)
 	}
 
 	// Read remote environment variables
 	remoteEnv, err := uc.syncService.ReadRemoteEnv()
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to read remote environment variables: %w", err)
+		return SyncResponse{}, NewServiceError("failed to read remote environment variables", err)
 	}
 
 	// Convert remote env variables to map for processing
@@ -41,13 +41,13 @@ func (uc *pushUseCase) Execute(ctx context.Context, configPath string) (SyncResp
 	// Read local environment variables from the specified config file
 	localEnv, err := uc.syncService.ReadLocalEnv()
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to read local environment variables: %w", err)
+		return SyncResponse{}, NewFileSystemError("failed to read local environment variables", err)
 	}
 
 	// Calculate the differences between remote and local environment variables
 	diff, err := uc.calculateEnvDiff(remoteEnvMap, localEnv)
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to calculate environment differences: %w", err)
+		return SyncResponse{}, NewValidationError("failed to calculate environment differences", "", err)
 	}
 
 	if len(diff.Added) > 0 || len(diff.Updated) > 0 || len(diff.Deleted) > 0 {
@@ -60,7 +60,7 @@ func (uc *pushUseCase) Execute(ctx context.Context, configPath string) (SyncResp
 			envSync.ToDelete = append(envSync.ToDelete, v.Key)
 		}
 		if err := uc.syncService.WriteRemoteEnv(envSync); err != nil {
-			return SyncResponse{}, fmt.Errorf("failed to write remote environment variables: %w", err)
+			return SyncResponse{}, NewServiceError("failed to write remote environment variables", err)
 		}
 	}
 
@@ -70,7 +70,7 @@ func (uc *pushUseCase) Execute(ctx context.Context, configPath string) (SyncResp
 func (uc *pushUseCase) checkConfigFileExists(configPath string) error {
 	// Check if the configuration file exists at the specified path
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return fmt.Errorf("configuration file does not exist at path: %s", configPath)
+		return NewNotFoundError(fmt.Sprintf("configuration file does not exist at path: %s", configPath), err)
 	}
 
 	return nil

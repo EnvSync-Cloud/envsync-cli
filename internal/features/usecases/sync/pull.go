@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -24,22 +23,15 @@ func NewPullUseCase() PullUseCase {
 
 func (uc *pullUseCase) Execute(ctx context.Context, configPath string) (SyncResponse, error) {
 	// Check if the configuration file exists
-	fmt.Println("checking config existance")
 	if err := uc.checkConfigFileExists(configPath); err != nil {
-		return SyncResponse{}, fmt.Errorf("configuration file check failed: %w", err)
+		return SyncResponse{}, NewFileSystemError("configuration file check failed", err)
 	}
-	fmt.Println("completed checking config existance")
 
-	fmt.Println("reading remote env")
 	// Read remote remote environment variables
 	remoteEnv, err := uc.syncService.ReadRemoteEnv()
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to read remote environment variables: %w", err)
+		return SyncResponse{}, NewServiceError("failed to read remote environment variables", err)
 	}
-	fmt.Println("reading remote env completed")
-	jsonData, _ := json.Marshal(remoteEnv)
-	fmt.Println("Remote Environment Variables:")
-	fmt.Println(string(jsonData))
 
 	// Convert remote env variables to map for processing
 	remoteEnvMap := make(map[string]string)
@@ -50,26 +42,20 @@ func (uc *pullUseCase) Execute(ctx context.Context, configPath string) (SyncResp
 	// Read local environment variables from the specified config file
 	localEnv, err := uc.syncService.ReadLocalEnv()
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to read local environment variables: %w", err)
+		return SyncResponse{}, NewFileSystemError("failed to read local environment variables", err)
 	}
 
 	// Calculate the differences between remote and local environment variables
 	diff, err := uc.calculateEnvDiff(remoteEnvMap, localEnv)
 	if err != nil {
-		return SyncResponse{}, fmt.Errorf("failed to calculate environment differences: %w", err)
+		return SyncResponse{}, NewValidationError("failed to calculate environment differences", "", err)
 	}
 
 	if len(diff.Added) > 0 || len(diff.Updated) > 0 || len(diff.Deleted) > 0 {
-		// print remote environment variables to the console
-		jsonData, _ := json.Marshal(remoteEnv)
-		fmt.Println("Remote Environment Variables:")
-		fmt.Println(string(jsonData))
-
 		err := uc.writeToLocalEnv(remoteEnvMap)
 		if err != nil {
-			return SyncResponse{}, fmt.Errorf("failed to write updated environment variables to local file: %w", err)
+			return SyncResponse{}, NewFileSystemError("failed to write updated environment variables to local file", err)
 		}
-		fmt.Println("Printed to env")
 	}
 
 	return diff, nil
