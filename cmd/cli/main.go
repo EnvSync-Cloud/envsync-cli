@@ -61,6 +61,7 @@ func buildDependencyContainer() *Container {
 	authFormatter := formatters.NewAuthFormatter()
 	configFormatter := formatters.NewConfigFormatter()
 	envFormatter := formatters.NewEnvFormatter()
+	initFormatter := formatters.NewInitFormatter()
 
 	// Initialize use cases
 	createAppUseCase := appUseCases.NewCreateAppUseCase()
@@ -121,6 +122,7 @@ func buildDependencyContainer() *Container {
 
 	c.InitHandler = handlers.NewInitHandler(
 		initUC,
+		initFormatter,
 	)
 
 	c.RunHandler = handlers.NewRunHandler(
