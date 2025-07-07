@@ -60,6 +60,7 @@ func buildDependencyContainer() *Container {
 	appFormatter := formatters.NewAppFormatter()
 	authFormatter := formatters.NewAuthFormatter()
 	configFormatter := formatters.NewConfigFormatter()
+	envFormatter := formatters.NewEnvFormatter()
 
 	// Initialize use cases
 	createAppUseCase := appUseCases.NewCreateAppUseCase()
@@ -110,6 +111,7 @@ func buildDependencyContainer() *Container {
 	c.EnvironmentHandler = handlers.NewEnvironmentHandler(
 		getEnvironmentUseCase,
 		switchEnvironmentUseCase,
+		envFormatter,
 	)
 
 	c.SyncHandler = handlers.NewSyncHandler(
