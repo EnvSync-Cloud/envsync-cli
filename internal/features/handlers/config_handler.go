@@ -2,25 +2,26 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
+	configUseCase "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/formatters"
 )
 
 type ConfigHandler struct {
-	setUseCase   config.SetConfigUseCase
-	getUseCase   config.GetConfigUseCase
-	resetUseCase config.ResetConfigUseCase
+	setUseCase   configUseCase.SetConfigUseCase
+	getUseCase   configUseCase.GetConfigUseCase
+	resetUseCase configUseCase.ResetConfigUseCase
 	formatter    *formatters.ConfigFormatter
 }
 
 func NewConfigHandler(
-	setUseCase config.SetConfigUseCase,
-	getUseCase config.GetConfigUseCase,
-	resetUseCase config.ResetConfigUseCase,
+	setUseCase configUseCase.SetConfigUseCase,
+	getUseCase configUseCase.GetConfigUseCase,
+	resetUseCase configUseCase.ResetConfigUseCase,
 	formatter *formatters.ConfigFormatter,
 ) *ConfigHandler {
 	return &ConfigHandler{
@@ -35,37 +36,32 @@ func (h *ConfigHandler) Set(ctx context.Context, cmd *cli.Command) error {
 	args := cmd.Args()
 
 	if args.Len() < 1 {
-		return h.formatter.FormatError(cmd.Writer, "No arguments provided. Usage: envsync config set key=value")
+		return h.formatUseCaseError(cmd, errors.New("No arguments provided. Usage: envsync config set key=value"))
 	}
 
 	// Parse key=value pairs from arguments
-	keyValuePairs := make(map[string]string)
-	for i := 0; i < args.Len(); i++ {
-		arg := args.Get(i)
-		parts := strings.SplitN(arg, "=", 2)
-		if len(parts) != 2 {
-			return h.formatter.FormatError(cmd.Writer, "Invalid format: '"+arg+"'. Expected format: key=value")
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		if key == "" {
-			return h.formatter.FormatError(cmd.Writer, "Empty key provided in: '"+arg+"'")
-		}
-
-		keyValuePairs[key] = value
+	keyValuePairs, err := h.extractKeyValuePairs(args)
+	if err != nil {
+		return h.formatUseCaseError(cmd, err)
 	}
 
 	// Build request
-	req := config.SetConfigRequest{
+	req := configUseCase.SetConfigRequest{
 		KeyValuePairs: keyValuePairs,
-		OverwriteAll:  cmd.Bool("overwrite"),
 	}
 
 	// Execute use case
 	if err := h.setUseCase.Execute(ctx, req); err != nil {
 		return h.formatUseCaseError(cmd, err)
+	}
+
+	if cmd.Bool("json") {
+		// If JSON output is requested, format the entire config
+		jsonOutput := map[string]any{
+			"message": "Configuration updated successfully!",
+			"config":  req.KeyValuePairs,
+		}
+		return h.formatter.FormatJSON(cmd.Writer, jsonOutput)
 	}
 
 	// Format success message
@@ -80,7 +76,7 @@ func (h *ConfigHandler) Get(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Build request
-	req := config.GetConfigRequest{
+	req := configUseCase.GetConfigRequest{
 		Keys: keys,
 	}
 
@@ -99,12 +95,24 @@ func (h *ConfigHandler) Get(ctx context.Context, cmd *cli.Command) error {
 	if len(keys) > 0 {
 		for _, key := range keys {
 			if value, exists := response.Values[key]; exists {
+				if cmd.Bool("json") {
+					jsonOutput := map[string]any{
+						"key":   key,
+						"value": value,
+					}
+					if err := h.formatter.FormatJSON(cmd.Writer, jsonOutput); err != nil {
+						return err
+					}
+				}
+
 				if err := h.formatter.FormatSingleValue(cmd.Writer, key, value); err != nil {
 					return err
 				}
 			} else {
-				if err := h.formatter.FormatWarning(cmd.Writer, "Key '"+key+"' not found"); err != nil {
-					return err
+				if !cmd.Bool("json") {
+					if err := h.formatter.FormatWarning(cmd.Writer, "Key '"+key+"' not found"); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -122,7 +130,7 @@ func (h *ConfigHandler) Reset(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Build request
-	req := config.ResetConfigRequest{
+	req := configUseCase.ResetConfigRequest{
 		Keys: keys,
 	}
 
@@ -133,8 +141,22 @@ func (h *ConfigHandler) Reset(ctx context.Context, cmd *cli.Command) error {
 
 	// Format success message
 	if len(keys) == 0 {
+		if cmd.Bool("json") {
+			jsonOutput := map[string]any{
+				"message": "All configuration values reset successfully!",
+			}
+			return h.formatter.FormatJSON(cmd.Writer, jsonOutput)
+		}
+
 		return h.formatter.FormatSuccess(cmd.Writer, "All configuration values reset successfully!")
 	} else {
+		if cmd.Bool("json") {
+			jsonOutput := map[string]any{
+				"message": "Configuration values reset successfully!",
+			}
+			return h.formatter.FormatJSON(cmd.Writer, jsonOutput)
+		}
+
 		return h.formatter.FormatSuccess(cmd.Writer, "Configuration values reset successfully!")
 	}
 }
@@ -142,19 +164,27 @@ func (h *ConfigHandler) Reset(ctx context.Context, cmd *cli.Command) error {
 // Helper methods
 
 func (h *ConfigHandler) formatUseCaseError(cmd *cli.Command, err error) error {
+	if cmd.Bool("json") {
+		// If JSON output is requested, format the error as JSON
+		jsonOutput := map[string]any{
+			"error": err.Error(),
+		}
+		return h.formatter.FormatJSON(cmd.Writer, jsonOutput)
+	}
+
 	// Handle different types of use case errors
 	switch e := err.(type) {
-	case *config.ConfigError:
+	case *configUseCase.ConfigError:
 		switch e.Code {
-		case config.ConfigErrorCodeValidation:
+		case configUseCase.ConfigErrorCodeValidation:
 			return h.formatter.FormatError(cmd.Writer, "Validation error: "+e.Message)
-		case config.ConfigErrorCodeFileSystem:
+		case configUseCase.ConfigErrorCodeFileSystem:
 			return h.formatter.FormatError(cmd.Writer, "File system error: "+e.Message)
-		case config.ConfigErrorCodePermission:
+		case configUseCase.ConfigErrorCodePermission:
 			return h.formatter.FormatError(cmd.Writer, "Permission error: "+e.Message)
-		case config.ConfigErrorCodeNotFound:
+		case configUseCase.ConfigErrorCodeNotFound:
 			return h.formatter.FormatError(cmd.Writer, "Configuration not found: "+e.Message)
-		case config.ConfigErrorCodeCorrupted:
+		case configUseCase.ConfigErrorCodeCorrupted:
 			return h.formatter.FormatError(cmd.Writer, "Configuration corrupted: "+e.Message)
 		default:
 			return h.formatter.FormatError(cmd.Writer, "Service error: "+e.Message)
@@ -162,4 +192,23 @@ func (h *ConfigHandler) formatUseCaseError(cmd *cli.Command, err error) error {
 	default:
 		return h.formatter.FormatError(cmd.Writer, "Unexpected error: "+err.Error())
 	}
+}
+
+func (h *ConfigHandler) extractKeyValuePairs(args cli.Args) (map[string]string, error) {
+	keyValuePairs := make(map[string]string)
+	for i := 0; i < args.Len(); i++ {
+		arg := args.Get(i)
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) != 2 {
+			errors.New("Invalid format: '" + arg + "'. Expected format: key=value")
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		if key == "" {
+			return nil, errors.New("Empty key provided in: '" + arg + "'")
+		}
+		keyValuePairs[key] = value
+	}
+
+	return keyValuePairs, nil
 }

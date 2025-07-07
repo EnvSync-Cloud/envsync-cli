@@ -25,7 +25,6 @@ type ResetConfigUseCase interface {
 
 type SetConfigRequest struct {
 	KeyValuePairs map[string]string
-	OverwriteAll  bool
 }
 
 type GetConfigRequest struct {
@@ -41,11 +40,6 @@ type GetConfigResponse struct {
 
 type ValidateConfigRequest struct {
 	Config *config.AppConfig // If nil, validate current config file
-}
-
-type ValidateConfigResponse struct {
-	IsValid bool
-	Issues  []ValidationIssue
 }
 
 type ValidationIssue struct {

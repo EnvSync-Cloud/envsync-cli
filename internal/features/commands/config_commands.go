@@ -12,14 +12,14 @@ func ConfigCommands(handler *handlers.ConfigHandler) *cli.Command {
 		Name:  "config",
 		Usage: "Manage configuration settings",
 		Commands: []*cli.Command{
-			SetCommand(handler),
-			GetCommand(handler),
-			ResetCommand(handler),
+			Set(handler),
+			Get(handler),
+			Reset(handler),
 		},
 	}
 }
 
-func SetCommand(handler *handlers.ConfigHandler) *cli.Command {
+func Set(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "set",
 		Usage:     "Set configuration values",
@@ -32,17 +32,10 @@ Examples:
 
 Supported keys:
   - backend_url: Backend API URL`,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "overwrite",
-				Usage: "Overwrite existing configuration completely",
-				Value: false,
-			},
-		},
 	}
 }
 
-func GetCommand(handler *handlers.ConfigHandler) *cli.Command {
+func Get(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "get",
 		Usage:     "Get configuration values",
@@ -59,9 +52,10 @@ Supported keys:
 	}
 }
 
-func ResetCommand(handler *handlers.ConfigHandler) *cli.Command {
+func Reset(handler *handlers.ConfigHandler) *cli.Command {
 	return &cli.Command{
 		Name:      "reset",
+		Aliases:   []string{"r"},
 		Usage:     "Reset configuration values",
 		Action:    handler.Reset,
 		ArgsUsage: "[key1] [key2] ...",
@@ -70,19 +64,6 @@ func ResetCommand(handler *handlers.ConfigHandler) *cli.Command {
 Examples:
   envsync config reset
   envsync config reset backend_url
-
-WARNING: This action cannot be undone. Consider backing up your configuration first.`,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "force",
-				Usage: "Skip confirmation prompt",
-				Value: false,
-			},
-			&cli.BoolFlag{
-				Name:  "backup",
-				Usage: "Create backup before resetting",
-				Value: true,
-			},
-		},
+`,
 	}
 }
