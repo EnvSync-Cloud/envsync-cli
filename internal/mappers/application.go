@@ -41,8 +41,10 @@ func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 	}
 
 	return requests.ApplicationRequest{
-		Name:        app.Name,
-		Description: app.Description,
-		Metadata:    metaData,
+		Name:          app.Name,
+		Description:   app.Description,
+		Metadata:      metaData,
+		PublicKey:     app.PublicKey,
+		EnableSecrets: app.EnableSecrets,
 	}
 }

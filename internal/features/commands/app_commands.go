@@ -47,6 +47,19 @@ func CreateCommand(handler *handlers.AppHandler) *cli.Command {
 				DefaultText: "false",
 				Value:       false,
 			},
+			&cli.BoolFlag{
+				Name:        "enable-secret",
+				Usage:       "Its a boolean to confirm you want to enable secrets for your application",
+				Aliases:     []string{"es"},
+				DefaultText: "false",
+				Value:       false,
+			},
+			&cli.StringFlag{
+				Name:    "public-key",
+				Usage:   "Public key for the application, used for encryption.(Note: If not provided then a new key will be generated and will be managed by EnvSync)",
+				Aliases: []string{"pk"},
+				Value:   "",
+			},
 		},
 	}
 }

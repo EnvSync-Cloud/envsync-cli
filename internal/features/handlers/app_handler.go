@@ -61,7 +61,15 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
+	// Extract values from command flags
 	setDefaultEnv := cmd.Bool("default-types")
+	enableSecret := cmd.Bool("enable-secret")
+	publicKey := cmd.String("public-key")
+
+	application.EnableSecrets = enableSecret
+	application.PublicKey = publicKey
+
+	// Set values in context
 	ctx = context.WithValue(ctx, "setDefaultEnv", setDefaultEnv)
 
 	app, err := h.createUseCase.Execute(ctx, application)
@@ -72,8 +80,16 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if cmd.Bool("json") {
+		if application.EnableSecrets && app.PublicKey == "" {
+			return h.formatter.FormatWarningJSON(cmd.Writer, "secrets are enabled but no public key was provided. A self managed key will be generated!!!")
+		}
+
 		// If JSON output is requested, format the application as JSON
 		return h.formatter.FormatJSON(cmd.Writer, app)
+	}
+
+	if application.EnableSecrets && application.PublicKey == "" {
+		return h.formatter.FormatWarning(cmd.Writer, "Secrets are enabled but no public key was provided. A self managed key will be generated!!!")
 	}
 
 	// Display success message

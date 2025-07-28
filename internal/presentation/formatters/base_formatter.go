@@ -37,6 +37,13 @@ func (f *BaseFormatter) FormatJSONError(writer io.Writer, err error) error {
 	return f.FormatJSON(writer, jsonError)
 }
 
+func (f *BaseFormatter) FormatWarningJSON(writer io.Writer, message string) error {
+	jsonWarning := map[string]string{
+		"warning": message,
+	}
+	return f.FormatJSON(writer, jsonWarning)
+}
+
 func (f *BaseFormatter) FormatSuccess(writer io.Writer, message string) error {
 	output := style.BoxStyle.Render(style.SuccessStyle.Render(fmt.Sprintf("✅ %s\n", message)))
 	_, err := writer.Write([]byte(output))
