@@ -61,6 +61,9 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
+	setDefaultEnv := cmd.Bool("default-types")
+	ctx = context.WithValue(ctx, "setDefaultEnv", setDefaultEnv)
+
 	app, err := h.createUseCase.Execute(ctx, application)
 	if err != nil {
 		if !errors.Is(err, tea.ErrProgramKilled) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/domain"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/presentation/tui/factory"
@@ -13,14 +14,17 @@ import (
 
 type createAppUseCase struct {
 	appService services.ApplicationService
+	envService services.EnvTypeService
 	tui        *factory.AppFactory
 }
 
 func NewCreateAppUseCase() CreateAppUseCase {
-	service := services.NewAppService()
+	as := services.NewAppService()
+	es := services.NewEnvTypeService()
 	tui := factory.NewAppFactory()
 	return &createAppUseCase{
-		appService: service,
+		appService: as,
+		envService: es,
 		tui:        tui,
 	}
 }
@@ -56,6 +60,37 @@ func (uc *createAppUseCase) Execute(ctx context.Context, app domain.Application)
 	createdApp, err := uc.appService.CreateApp(&app)
 	if err != nil {
 		return nil, NewServiceError("failed to create application", err)
+	}
+
+	setDefaultEnv := ctx.Value("setDefaultEnv")
+	if setDefaultEnv != nil && setDefaultEnv.(bool) {
+		var wg sync.WaitGroup
+		var prodErr, devErr error
+
+		wg.Add(2)
+
+		// Create PROD environment type
+		go func() {
+			defer wg.Done()
+			prodEnvType := domain.NewEnvType(createdApp.ID, "PROD", false, false, "")
+			_, prodErr = uc.envService.CreateEnvType(prodEnvType)
+		}()
+
+		// Create DEV environment type
+		go func() {
+			defer wg.Done()
+			devEnvType := domain.NewEnvType(createdApp.ID, "DEV", false, false, "")
+			_, devErr = uc.envService.CreateEnvType(devEnvType)
+		}()
+
+		wg.Wait()
+
+		if prodErr != nil {
+			return nil, NewServiceError("failed to create PROD environment type", prodErr)
+		}
+		if devErr != nil {
+			return nil, NewServiceError("failed to create DEV environment type", devErr)
+		}
 	}
 
 	return &createdApp, nil

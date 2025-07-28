@@ -5,10 +5,12 @@ import (
 
 	"resty.dev/v3"
 
+	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/requests"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/repository/responses"
 )
 
 type EnvTypeRepository interface {
+	Create(*requests.EnvTypeRequest) (responses.EnvTypeResponse, error)
 	GetAll() ([]responses.EnvTypeResponse, error)
 	GetByID(id string) (responses.EnvTypeResponse, error)
 	GetByAppID(appID string) ([]responses.EnvTypeResponse, error)
@@ -24,6 +26,25 @@ func NewEnvTypeRepository() EnvTypeRepository {
 	return &envTypeRepo{
 		client: client,
 	}
+}
+
+func (e *envTypeRepo) Create(req *requests.EnvTypeRequest) (responses.EnvTypeResponse, error) {
+	var res responses.EnvTypeResponse
+
+	resp, err := e.client.R().
+		SetBody(req).
+		SetResult(&res).
+		Post("/env_type")
+
+	if err != nil {
+		return responses.EnvTypeResponse{}, fmt.Errorf("failed to create environment type: %w", err)
+	}
+
+	if resp.StatusCode() != 201 {
+		return responses.EnvTypeResponse{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+	}
+
+	return res, nil
 }
 
 func (e *envTypeRepo) GetAll() ([]responses.EnvTypeResponse, error) {

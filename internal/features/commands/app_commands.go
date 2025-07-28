@@ -40,6 +40,13 @@ func CreateCommand(handler *handlers.AppHandler) *cli.Command {
 				Usage:   "Application metadata in key=value format",
 				Aliases: []string{"m"},
 			},
+			&cli.BoolFlag{
+				Name:        "default-types",
+				Usage:       "Create PROD and DEV environment by default",
+				Aliases:     []string{"dt"},
+				DefaultText: "false",
+				Value:       false,
+			},
 		},
 	}
 }

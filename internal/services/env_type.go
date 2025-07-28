@@ -7,6 +7,7 @@ import (
 )
 
 type EnvTypeService interface {
+	CreateEnvType(envType *domain.EnvType) (domain.EnvType, error)
 	GetEnvTypeByID(id string) (domain.EnvType, error)
 	GetEnvTypeByAppID(appID string) ([]domain.EnvType, error)
 }
@@ -21,6 +22,17 @@ func NewEnvTypeService() EnvTypeService {
 	return &envTypeService{
 		repo: r,
 	}
+}
+
+func (e *envTypeService) CreateEnvType(envType *domain.EnvType) (domain.EnvType, error) {
+	req := mappers.EnvTypeDomainToRequest(envType)
+
+	res, err := e.repo.Create(&req)
+	if err != nil {
+		return domain.EnvType{}, err
+	}
+
+	return mappers.EnvTypeResponseToDomain(res), nil
 }
 
 func (e *envTypeService) GetEnvTypeByID(id string) (domain.EnvType, error) {
