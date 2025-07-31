@@ -79,6 +79,7 @@ func buildDependencyContainer() *Container {
 
 	getEnvironmentUseCase := envUseCases.NewGetEnvUseCase()
 	switchEnvironmentUseCase := envUseCases.NewSwitchEnvUseCase()
+	deleteEnvironmentUseCase := envUseCases.NewDeleteEnvUseCase()
 
 	pullUseCase := syncUseCase.NewPullUseCase()
 	pushUseCase := syncUseCase.NewPushUseCase()
@@ -113,6 +114,7 @@ func buildDependencyContainer() *Container {
 	c.EnvironmentHandler = handlers.NewEnvironmentHandler(
 		getEnvironmentUseCase,
 		switchEnvironmentUseCase,
+		deleteEnvironmentUseCase,
 		envFormatter,
 	)
 

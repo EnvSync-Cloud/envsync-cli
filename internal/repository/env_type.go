@@ -14,6 +14,7 @@ type EnvTypeRepository interface {
 	GetAll() ([]responses.EnvTypeResponse, error)
 	GetByID(id string) (responses.EnvTypeResponse, error)
 	GetByAppID(appID string) ([]responses.EnvTypeResponse, error)
+	Delete(string) error
 }
 
 type envTypeRepo struct {
@@ -107,4 +108,20 @@ func (e *envTypeRepo) GetByAppID(appID string) ([]responses.EnvTypeResponse, err
 	}
 
 	return filteredResponse, nil
+}
+
+func (e *envTypeRepo) Delete(id string) error {
+	resp, err := e.client.R().
+		SetPathParam("id", id).
+		Delete("/env_type/{id}")
+
+	if err != nil {
+		return fmt.Errorf("failed to delete environment type: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+	}
+
+	return nil
 }

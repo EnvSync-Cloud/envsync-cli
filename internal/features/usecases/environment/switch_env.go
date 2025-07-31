@@ -60,7 +60,7 @@ func (uc *switchEnvUseCase) readSyncConfig() (*domain.SyncConfig, error) {
 }
 
 func (uc *switchEnvUseCase) fetchAvailableEnvs(appID string) ([]domain.EnvType, error) {
-	envs, err := uc.envTypeService.GetEnvTypeByAppID(appID)
+	envs, err := uc.envTypeService.GetEnvTypesByAppID(appID)
 	if err != nil {
 		return nil, NewServiceError("failed to fetch environment types", err)
 	}

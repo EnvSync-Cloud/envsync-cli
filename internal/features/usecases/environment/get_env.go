@@ -19,7 +19,7 @@ func NewGetEnvUseCase() GetEnvUseCase {
 }
 
 func (uc *getEnvUseCase) ExecuteByAppID(ctx context.Context, appID string) ([]domain.EnvType, error) {
-	env, err := uc.envService.GetEnvTypeByAppID(appID)
+	env, err := uc.envService.GetEnvTypesByAppID(appID)
 	if err != nil {
 		return nil, NewServiceError("failed to get environment by app ID", err)
 	}

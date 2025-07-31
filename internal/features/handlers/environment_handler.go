@@ -15,17 +15,20 @@ import (
 type EnvironmentHandler struct {
 	getEnvUseCase    environment.GetEnvUseCase
 	switchEnvUseCase environment.SwitchEnvUseCase
+	deleteEnvUseCase environment.DeleteEnvUseCase
 	formatter        *formatters.EnvFormatter
 }
 
 func NewEnvironmentHandler(
 	getEnvUseCase environment.GetEnvUseCase,
 	switchEnvUseCase environment.SwitchEnvUseCase,
+	deleteEnvUseCase environment.DeleteEnvUseCase,
 	formatter *formatters.EnvFormatter,
 ) *EnvironmentHandler {
 	return &EnvironmentHandler{
 		getEnvUseCase:    getEnvUseCase,
 		switchEnvUseCase: switchEnvUseCase,
+		deleteEnvUseCase: deleteEnvUseCase,
 		formatter:        formatter,
 	}
 }
@@ -42,6 +45,47 @@ func (h *EnvironmentHandler) SwitchEnvironment(ctx context.Context, cmd *cli.Com
 
 	if err := h.switchEnvUseCase.Execute(ctx, env); !errors.Is(err, tea.ErrProgramKilled) && err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (h *EnvironmentHandler) GetAllEnvironments(ctx context.Context, cmd *cli.Command) error {
+	if cmd.Bool("json") && !cmd.IsSet("app-id") {
+		return h.formatUseCaseError(cmd, errors.New("app-id must be provided with json flag"))
+	}
+
+	// TODO: Implement the logic to get all environments for an application
+	panic("Handler is not implemented yet!!!")
+}
+
+func (h *EnvironmentHandler) DeleteEnvironment(ctx context.Context, cmd *cli.Command) error {
+	if cmd.Bool("json") && !cmd.IsSet("id") {
+		return h.formatUseCaseError(cmd, errors.New("id must be provided with json flag"))
+	}
+
+	if !cmd.IsSet("id") {
+		return h.formatUseCaseError(cmd, errors.New("id is required for deletion"))
+	}
+
+	id := cmd.String("id")
+
+	err := h.deleteEnvUseCase.Execute(ctx, id)
+	if err != nil {
+		return h.formatUseCaseError(cmd, err)
+	}
+
+	if cmd.Bool("json") {
+		jsonOutput := map[string]any{
+			"message": "Environment deleted successfully",
+			"id":      id,
+		}
+
+		return h.formatter.FormatJSON(cmd.Writer, jsonOutput)
+	}
+
+	if err := h.formatter.FormatSuccess(cmd.Writer, "Environment deleted successfully(id: "+id+")"); err != nil {
+		return h.formatUseCaseError(cmd, err)
 	}
 
 	return nil
