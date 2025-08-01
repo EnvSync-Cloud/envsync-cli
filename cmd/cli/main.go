@@ -87,6 +87,9 @@ func buildDependencyContainer() *Container {
 	initUC := inituc.NewInitUseCase()
 
 	injectUseCase := run.NewInjectEnv()
+	injectSecretUseCase := run.NewInjectSecretUseCase()
+	fetchAppUseCase := run.NewFetchAppUseCase()
+	readConfigUseCase := run.NewReadConfigUseCase()
 	runUseCase := run.NewRedactor()
 
 	// Initialize handlers
@@ -132,6 +135,9 @@ func buildDependencyContainer() *Container {
 	c.RunHandler = handlers.NewRunHandler(
 		runUseCase,
 		injectUseCase,
+		injectSecretUseCase,
+		fetchAppUseCase,
+		readConfigUseCase,
 	)
 
 	return c
