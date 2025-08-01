@@ -9,3 +9,7 @@ func ReadFile(path string) (string, error) {
 	}
 	return string(data), nil
 }
+
+func WriteFile(data, path string) error {
+	return os.WriteFile(path, []byte(data), 0644)
+}

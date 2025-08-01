@@ -11,6 +11,7 @@ import (
 	authUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/auth"
 	configUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/config"
 	envUseCases "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/environment"
+	genpem "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/gen_pem"
 	inituc "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/init"
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/run"
 	syncUseCase "github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/sync"
@@ -30,6 +31,7 @@ func main() {
 		container.SyncHandler,
 		container.InitHandler,
 		container.RunHandler,
+		container.GenPEMKeyHandler,
 	)
 
 	// Build CLI app
@@ -50,6 +52,7 @@ type Container struct {
 	SyncHandler        *handlers.SyncHandler
 	InitHandler        *handlers.InitHandler
 	RunHandler         *handlers.RunHandler
+	GenPEMKeyHandler   *handlers.GenPEMKeyHandler
 }
 
 // buildDependencyContainer creates and wires all handler dependencies
@@ -91,6 +94,8 @@ func buildDependencyContainer() *Container {
 	fetchAppUseCase := run.NewFetchAppUseCase()
 	readConfigUseCase := run.NewReadConfigUseCase()
 	runUseCase := run.NewRedactor()
+
+	genPEMKeyUseCase := genpem.NewGenKeyPairUseCase()
 
 	// Initialize handlers
 	c.AppHandler = handlers.NewAppHandler(
@@ -138,6 +143,10 @@ func buildDependencyContainer() *Container {
 		injectSecretUseCase,
 		fetchAppUseCase,
 		readConfigUseCase,
+	)
+
+	c.GenPEMKeyHandler = handlers.NewGenPEMKeyHandler(
+		genPEMKeyUseCase,
 	)
 
 	return c
