@@ -16,15 +16,18 @@ func AppResponseToDomain(res responses.AppResponse) domain.Application {
 	}
 
 	return domain.Application{
-		ID:          res.ID,
-		Name:        res.Name,
-		Description: res.Description,
-		Metadata:    res.Metadata,
-		OrgID:       res.OrgID,
-		EnvTypes:    envTypes,
-		EnvCount:    res.EnvCount,
-		CreatedAt:   res.CreatedAt,
-		UpdatedAt:   res.UpdatedAt,
+		ID:              res.ID,
+		Name:            res.Name,
+		Description:     res.Description,
+		Metadata:        res.Metadata,
+		OrgID:           res.OrgID,
+		EnvTypes:        envTypes,
+		EnvCount:        res.EnvCount,
+		PublicKey:       res.PublicKey,
+		EnableSecrets:   res.EnableSecrets,
+		IsManagedSecret: res.IsManagedSecret,
+		CreatedAt:       res.CreatedAt,
+		UpdatedAt:       res.UpdatedAt,
 	}
 }
 
@@ -41,10 +44,11 @@ func DomainToAppRequest(app *domain.Application) requests.ApplicationRequest {
 	}
 
 	return requests.ApplicationRequest{
-		Name:          app.Name,
-		Description:   app.Description,
-		Metadata:      metaData,
-		PublicKey:     app.PublicKey,
-		EnableSecrets: app.EnableSecrets,
+		Name:            app.Name,
+		Description:     app.Description,
+		Metadata:        metaData,
+		PublicKey:       app.PublicKey,
+		EnableSecrets:   app.EnableSecrets,
+		IsManagedSecret: app.IsManagedSecret,
 	}
 }

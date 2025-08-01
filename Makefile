@@ -49,7 +49,7 @@ watch:
 		fi
 
 ## update: updates the packages and tidy the modfile
-.PHONY: watch
+.PHONY: update
 update:
 	@go get -u ./...
 	@go mod tidy -v

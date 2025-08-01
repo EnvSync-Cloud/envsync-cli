@@ -69,6 +69,12 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 	application.EnableSecrets = enableSecret
 	application.PublicKey = publicKey
 
+	if publicKey == "" && enableSecret {
+		application.IsManagedSecret = true
+	} else {
+		application.IsManagedSecret = false
+	}
+
 	// Set values in context
 	ctx = context.WithValue(ctx, "setDefaultEnv", setDefaultEnv)
 
@@ -89,7 +95,7 @@ func (h *AppHandler) Create(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if application.EnableSecrets && application.PublicKey == "" {
-		return h.formatter.FormatWarning(cmd.Writer, "Secrets are enabled but no public key was provided. A self managed key will be generated!!!")
+		h.formatter.FormatWarning(cmd.Writer, "Secrets are enabled but no public key was provided. A self managed key will be generated!!!")
 	}
 
 	// Display success message
