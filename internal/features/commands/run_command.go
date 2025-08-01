@@ -17,6 +17,12 @@ func RunCommand(handler *handlers.RunHandler) *cli.Command {
 				Aliases:  []string{"c"},
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:     "private-key",
+				Usage:    "Path to the private key for managed secrets",
+				Aliases:  []string{"pk"},
+				Required: false,
+			},
 		},
 	}
 }

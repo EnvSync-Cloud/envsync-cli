@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/EnvSync-Cloud/envsync-cli/internal/features/usecases/run"
@@ -51,6 +52,10 @@ func (h *RunHandler) Run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if app.EnableSecrets {
+		if !cmd.IsSet("private-key") {
+			return errors.New("private-key flag is required when secrets are enabled")
+		}
+
 		ctx = context.WithValue(ctx, "managedSecret", app.IsManagedSecret)
 		ctx = context.WithValue(ctx, "privateKeyPath", cmd.String("private-key"))
 		ctx = context.WithValue(ctx, "appID", configData.AppID)
