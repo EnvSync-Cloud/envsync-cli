@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -20,7 +21,7 @@ func NewRedactor() RedactUseCase {
 	return &redactUseCase{}
 }
 
-func (uc *redactUseCase) Execute(ctx context.Context, args []string, redactText []string) int {
+func (uc *redactUseCase) Execute(ctx context.Context, args []string, envData map[string]string) int {
 	if len(args) == 0 {
 		fmt.Fprintf(os.Stderr, "No command provided\n")
 		return 1
@@ -51,7 +52,7 @@ func (uc *redactUseCase) Execute(ctx context.Context, args []string, redactText 
 	}
 
 	// Handle interrupt signals
-	ctx, cancel := context.WithCancel(context.Background())
+	cancelCtx, cancel := context.WithCancel(context.Background())
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -77,10 +78,10 @@ func (uc *redactUseCase) Execute(ctx context.Context, args []string, redactText 
 	cmdDone := make(chan int, 1)
 
 	// Handle stdin in a separate goroutine
-	go uc.handleStdin(ctx, ptyMaster)
+	go uc.handleStdin(cancelCtx, ptyMaster)
 
 	// Handle stdout/stderr processing
-	go uc.handleOutput(ctx, ptyMaster, outputDone, redactText)
+	go uc.handleOutput(cancelCtx, ptyMaster, outputDone, envData)
 
 	// Wait for command completion or context cancellation
 	go func() {
@@ -106,7 +107,7 @@ func (uc *redactUseCase) Execute(ctx context.Context, args []string, redactText 
 		}
 		cancel()
 		return exitCode
-	case <-ctx.Done():
+	case <-cancelCtx.Done():
 		// Wait for command to finish with timeout
 		select {
 		case exitCode := <-cmdDone:
@@ -161,7 +162,7 @@ func (uc *redactUseCase) handleStdin(ctx context.Context, ptyMaster pty.Pty) {
 	}
 }
 
-func (uc *redactUseCase) handleOutput(ctx context.Context, ptyMaster pty.Pty, done chan<- int, redactText []string) {
+func (uc *redactUseCase) handleOutput(ctx context.Context, ptyMaster pty.Pty, done chan<- int, envData map[string]string) {
 	buffer := make([]byte, 4096)
 	defer func() {
 		done <- 0
@@ -201,7 +202,7 @@ func (uc *redactUseCase) handleOutput(ctx context.Context, ptyMaster pty.Pty, do
 		case data := <-outputChan:
 			// Process and redact the output
 			text := string(data)
-			redactedText := uc.processAndRedactText(text, redactText)
+			redactedText := uc.processAndRedactText(text, envData)
 
 			// Write the redacted content to stdout
 			_, writeErr := os.Stdout.Write([]byte(redactedText))
@@ -220,208 +221,43 @@ func (uc *redactUseCase) handleOutput(ctx context.Context, ptyMaster pty.Pty, do
 	}
 }
 
-func (uc *redactUseCase) processAndRedactText(text string, redactText []string) string {
+func (uc *redactUseCase) processAndRedactText(text string, envData map[string]string) string {
 	if len(text) == 0 {
 		return text
 	}
 
-	// Use comprehensive token-based redaction
-	return uc.redactTokens(text, redactText)
+	return uc.redactWithRegex(text, envData)
 }
 
-// redactTokens implements precise value-based redaction
-func (uc *redactUseCase) redactTokens(text string, redactText []string) string {
-	if len(redactText) == 0 {
+// redactWithRegex implements regex-based redaction similar to the JavaScript implementation
+func (uc *redactUseCase) redactWithRegex(text string, envData map[string]string) string {
+	if len(envData) == 0 {
 		return text
 	}
 
-	redactedText := text
+	output := text
 
-	// Process redaction values by length - longer values first to avoid conflicts
-	for _, valueToRedact := range redactText {
-		if valueToRedact == "" {
+	// Create redaction patterns for each env var (similar to JavaScript implementation)
+	for _, value := range envData {
+		if value == "" {
 			continue
 		}
 
-		// For longer values (8+ chars), do direct replacement
-		if len(valueToRedact) >= 8 {
-			if strings.Contains(redactedText, valueToRedact) {
-				replacement := uc.generateRedaction()
-				redactedText = strings.ReplaceAll(redactedText, valueToRedact, replacement)
-			}
-		} else {
-			// For shorter values, only redact if they appear as complete words
-			// to avoid false positives in paths, variable names, etc.
-			redactedText = uc.redactCompleteWords(redactedText, valueToRedact)
-		}
-	}
+		// Escape special regex characters in the value
+		escapedValue := regexp.QuoteMeta(value)
 
-	return redactedText
-}
-
-// redactCompleteWords only redacts values that appear as complete words
-func (uc *redactUseCase) redactCompleteWords(text, valueToRedact string) string {
-	if valueToRedact == "" {
-		return text
-	}
-
-	// Split text into words and check each one
-	words := strings.Fields(text)
-	for _, word := range words {
-		// Skip if this word appears to be part of a path or system component
-		if uc.isPartOfPath(word) {
+		// Create regex pattern
+		pattern, err := regexp.Compile(escapedValue)
+		if err != nil {
+			// If regex compilation fails, fall back to simple string replacement
+			output = strings.ReplaceAll(output, value, "[REDACTED]")
 			continue
 		}
 
-		// Clean the word for comparison (remove punctuation)
-		cleanWord := uc.cleanWordForMatching(word)
-
-		// Only redact if the cleaned word exactly matches the value to redact
-		if cleanWord == valueToRedact {
-			replacement := uc.generateRedaction()
-			text = strings.ReplaceAll(text, word, replacement)
-		}
+		// Replace all occurrences with the redacted message
+		replacement := "[REDACTED]"
+		output = pattern.ReplaceAllString(output, replacement)
 	}
 
-	return text
-}
-
-// isPartOfPath checks if a word appears to be part of a file path or variable name
-func (uc *redactUseCase) isPartOfPath(word string) bool {
-	// Don't redact if word contains path separators
-	if strings.Contains(word, "/") || strings.Contains(word, "\\") {
-		return true
-	}
-
-	// Don't redact if word appears to be a URL
-	if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") ||
-		strings.HasPrefix(word, "ftp://") || strings.HasPrefix(word, "ssh://") {
-		return true
-	}
-
-	// Don't redact if word contains variable name patterns (underscore, all caps)
-	if strings.Contains(word, "_") && strings.ToUpper(word) == word {
-		return true
-	}
-
-	// Don't redact if word contains domain-like patterns
-	if strings.Contains(word, ".") && (strings.Contains(word, ".com") ||
-		strings.Contains(word, ".org") || strings.Contains(word, ".net") ||
-		strings.Contains(word, ".io") || strings.Contains(word, ".dev")) {
-		return true
-	}
-
-	// Don't redact if word ends with common file extensions
-	fileExtensions := []string{".key", ".pem", ".json", ".yaml", ".yml", ".conf", ".cfg", ".txt", ".log"}
-	for _, ext := range fileExtensions {
-		if strings.HasSuffix(word, ext) {
-			return true
-		}
-	}
-
-	// Don't redact if word looks like an environment variable (contains equals)
-	if strings.Contains(word, "=") {
-		return true
-	}
-
-	// Don't redact if word is followed by a colon (likely a label or key)
-	if strings.HasSuffix(word, ":") {
-		return true
-	}
-
-	return false
-}
-
-// tokenizeText splits text into meaningful tokens using various delimiters
-func (uc *redactUseCase) tokenizeText(text string) []string {
-	var tokens []string
-
-	// First split by whitespace to get main chunks
-	fields := strings.Fields(text)
-
-	for _, field := range fields {
-		// Further split each field by common delimiters while preserving the original tokens
-		subTokens := uc.splitByDelimiters(field)
-		tokens = append(tokens, subTokens...)
-	}
-
-	return tokens
-}
-
-// splitByDelimiters splits a string by various delimiters but keeps meaningful tokens together
-func (uc *redactUseCase) splitByDelimiters(s string) []string {
-	if s == "" {
-		return nil
-	}
-
-	var tokens []string
-	currentToken := ""
-
-	// Common delimiters that might separate tokens
-	delimiters := " \t\n\r,;|&"
-
-	for i, char := range s {
-		if strings.ContainsRune(delimiters, char) {
-			if currentToken != "" {
-				tokens = append(tokens, currentToken)
-				currentToken = ""
-			}
-		} else {
-			currentToken += string(char)
-		}
-
-		// If we're at the end, add the current token
-		if i == len(s)-1 && currentToken != "" {
-			tokens = append(tokens, currentToken)
-		}
-	}
-
-	// Also add the original string as a token to catch cases where
-	// sensitive data spans across what we consider delimiters
-	tokens = append(tokens, s)
-
-	return tokens
-}
-
-// tokenContainsSensitiveData checks if a token contains any sensitive data
-func (uc *redactUseCase) tokenContainsSensitiveData(token string, redactText []string) bool {
-	for _, valueToRedact := range redactText {
-		if valueToRedact == "" {
-			continue
-		}
-
-		// Check direct containment
-		if strings.Contains(token, valueToRedact) {
-			return true
-		}
-
-		// Check after cleaning the token
-		cleanToken := uc.cleanWordForMatching(token)
-		if strings.Contains(cleanToken, valueToRedact) {
-			return true
-		}
-
-		// Check if the sensitive value is contained in the cleaned token
-		cleanValue := uc.cleanWordForMatching(valueToRedact)
-		if cleanValue != "" && strings.Contains(cleanToken, cleanValue) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (uc *redactUseCase) cleanWordForMatching(word string) string {
-	// Remove common punctuation and special characters that might be attached to sensitive values
-	cleaned := strings.TrimFunc(word, func(r rune) bool {
-		return r == ',' || r == '.' || r == ';' || r == ':' || r == '"' || r == '\'' ||
-			r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' ||
-			r == '\n' || r == '\r' || r == '\t' || r == '@' || r == '/' || r == '?' ||
-			r == '&' || r == '=' || r == '#' || r == '%' || r == '+' || r == '~'
-	})
-	return cleaned
-}
-
-func (uc *redactUseCase) generateRedaction() string {
-	return "[REDACTED]"
+	return output
 }

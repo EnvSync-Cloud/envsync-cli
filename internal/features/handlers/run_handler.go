@@ -52,7 +52,7 @@ func (h *RunHandler) Run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if app.EnableSecrets {
-		if !cmd.IsSet("private-key") {
+		if !cmd.IsSet("private-key") && !app.IsManagedSecret {
 			return errors.New("private-key flag is required when secrets are enabled")
 		}
 
@@ -71,12 +71,7 @@ func (h *RunHandler) Run(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
-	var redactedValues []string
-	for _, env := range envs {
-		redactedValues = append(redactedValues, env)
-	}
-
-	_ = h.redactUseCase.Execute(ctx, c, redactedValues)
+	_ = h.redactUseCase.Execute(ctx, c, envs)
 
 	return nil
 }
