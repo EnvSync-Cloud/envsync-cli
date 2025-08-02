@@ -23,5 +23,5 @@ type InjectSecretsUseCase interface {
 }
 
 type RedactUseCase interface {
-	Execute(context.Context, []string, []string) int
+	Execute(context.Context, []string, map[string]string) int
 }
